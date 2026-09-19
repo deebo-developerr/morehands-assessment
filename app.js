@@ -25,8 +25,8 @@
         {name: "Inventory B", detail: "2 tickets · Section 103, Row X, Seats 14–15 · purchased at $75 per ticket"}
       ],
       evidence: [
-        {label: "Market evidence 1", src: "assets/case2/market-evidence-1.webp", alt: "Frozen marketplace evidence for pricing inventory", meta: "Frozen snapshot"},
-        {label: "Market evidence 2", src: "assets/case2/market-evidence-2.webp", alt: "Additional frozen marketplace evidence for pricing inventory", meta: "Frozen snapshot"}
+        {label: "Inventory A · market evidence", src: "assets/case2/inventory-a-market-evidence.webp", alt: "Frozen marketplace evidence for pricing Inventory A", meta: "Frozen snapshot"},
+        {label: "Inventory B · market evidence", src: "assets/case2/inventory-b-market-evidence.webp", alt: "Frozen marketplace evidence for pricing Inventory B", meta: "Frozen snapshot"}
       ]
     },
     {
@@ -36,8 +36,8 @@
       taskTitle: "Respond to the incident",
       prompt: "What would you do next, and why?",
       evidence: [
-        {label: "Error evidence", src: "assets/case3/error-evidence.webp", alt: "Automatiq sale error screenshot", meta: "Operational case"},
-        {label: "Related order evidence", src: "assets/case3/order-evidence.webp", alt: "Related order information screenshot", meta: "Operational case"}
+        {label: "Automatiq error", src: "assets/case3/automatiq-sale-error-1.webp", alt: "Automatiq sale error screenshot", meta: "Operational case"},
+        {label: "Related order evidence", src: "assets/case3/automatiq-sale-error-2.webp", alt: "Related Automatiq order information screenshot", meta: "Operational case"}
       ]
     },
     {
@@ -47,7 +47,7 @@
       taskTitle: "Respond to the incident",
       prompt: "What would you do next, and why?",
       evidence: [
-        {label: "Checkout error", src: "assets/case4/checkout-error.webp", alt: "Checkout payment error screenshot", meta: "Operational case"}
+        {label: "Checkout error", src: "assets/case4/checkout-payment-error.webp", alt: "Checkout payment error screenshot", meta: "Operational case"}
       ]
     },
     {
@@ -57,7 +57,7 @@
       taskTitle: "Respond to the incident",
       prompt: "What would you do next, and why?",
       evidence: [
-        {label: "Paused session", src: "assets/case5/paused-session.webp", alt: "Paused browser session screenshot", meta: "Operational case"}
+        {label: "Paused session", src: "assets/case5/paused-browser-session.webp", alt: "Paused browser session screenshot", meta: "Operational case"}
       ]
     }
   ];
