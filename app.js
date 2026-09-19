@@ -99,11 +99,16 @@
   });
   if (config.videoProviderUrl) {
     const providerUrl = new URL(config.videoProviderUrl, location.href);
+    providerUrl.searchParams.set("custom", activeCid);
+    const candidateEmail = (params.get("email") || "").trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidateEmail)) {
+      providerUrl.searchParams.set("email", candidateEmail);
+    }
     providerFrame.src = providerUrl.toString();
     providerFrame.hidden = false;
     document.getElementById("recorderPlaceholder").hidden = true;
     providerStatus.classList.add("ready");
-    document.querySelector("#inlineProviderStatus strong").textContent = "Embedded recorder ready";
+    document.querySelector("#inlineProviderStatus strong").textContent = "Hirevire recorder ready";
     document.querySelector("#inlineProviderStatus span:last-child").textContent = "Submit the written answers above, then complete all five recordings here.";
     window.addEventListener("message", event => {
       if (event.origin !== providerUrl.origin) return;
