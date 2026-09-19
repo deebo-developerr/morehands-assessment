@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Ticket Purchasing Assessment</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to case study</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <div>
+        <p class="eyebrow">Candidate assessment</p>
+        <h1>Ticket Purchasing Specialist</h1>
+      </div>
+    </div>
+    <div class="candidate-chip" id="candidateChip" hidden>
+      <span>Candidate ID</span>
+      <strong id="candidateIdLabel"></strong>
+      <button class="copy-button" id="copyCandidateId" type="button">Copy</button>
+    </div>
+  </header>
+
+  <noscript><div class="fatal">This assessment requires JavaScript. Please enable it and reopen your invitation link.</div></noscript>
+
+  <main id="main" class="shell">
+    <section id="accessGate" class="gate card" hidden>
+      <p class="eyebrow">Personalised link required</p>
+      <h2>Open the link from your invitation</h2>
+      <p>This assessment link is missing its candidate ID. Return to your invitation and use the full link provided.</p>
+    </section>
+
+    <div id="assessmentApp" hidden>
+      <section class="intro card">
+        <div>
+          <p class="eyebrow">Five frozen case studies</p>
+          <h2>Review the evidence. Make the call.</h2>
+          <p>Complete each case, then submit your written answers. Explain what you would do and why.</p>
+        </div>
+        <div class="snapshot-note">
+          <strong>Assessment snapshot</strong>
+          <span>Use only the evidence supplied. Do not search the live events or systems.</span>
+        </div>
+      </section>
+
+      <nav class="case-nav card" aria-label="Assessment cases">
+        <div class="case-nav-track" id="caseNav"></div>
+        <div class="progress-wrap" aria-label="Assessment progress">
+          <span id="progressText">Case 1 of 5</span>
+          <div class="progress-bar" aria-hidden="true"><span id="progressBar"></span></div>
+        </div>
+      </nav>
+
+      <section class="case-layout">
+        <article class="evidence-card card" aria-labelledby="caseTitle">
+          <div class="case-heading">
+            <div>
+              <p class="eyebrow" id="caseNumber"></p>
+              <h2 id="caseTitle"></h2>
+              <p class="case-context" id="caseContext"></p>
+            </div>
+            <div class="viewer-actions">
+              <button type="button" data-zoom="fit">Fit</button>
+              <button type="button" data-zoom="100">100%</button>
+              <button type="button" data-zoom="140">140%</button>
+              <button type="button" id="openImage">Open image</button>
+            </div>
+          </div>
+          <div class="evidence-tabs" id="evidenceTabs" role="tablist" aria-label="Evidence images"></div>
+          <div class="viewer" id="viewer" tabindex="0" aria-label="Evidence image viewer">
+            <img id="evidenceImage" alt="">
+          </div>
+          <div class="evidence-caption">
+            <span id="evidenceLabel"></span>
+            <span id="evidenceMeta"></span>
+          </div>
+        </article>
+
+        <aside class="task-column">
+          <section class="task-card card">
+            <p class="eyebrow">Your task</p>
+            <h2 id="taskTitle"></h2>
+            <p id="taskPrompt"></p>
+            <div class="inventory" id="inventory" hidden></div>
+          </section>
+          <section class="case-controls card">
+            <button class="secondary" id="previousCase" type="button">Previous</button>
+            <button class="primary" id="nextCase" type="button">Next case</button>
+          </section>
+        </aside>
+      </section>
+
+      <section class="submit-section card" id="submitSection">
+        <div class="submit-heading">
+          <div>
+            <p class="eyebrow">Written responses</p>
+            <h2>Submit your decisions</h2>
+            <p>Use the same email address you used in your application. Your candidate ID has been added automatically.</p>
+          </div>
+          <button class="secondary" id="openFormNewTab" type="button">Open form in new tab</button>
+        </div>
+        <iframe id="responseForm" title="Written assessment response form" loading="lazy"></iframe>
+        <div class="video-next" id="videoNext" hidden>
+          <div>
+            <strong>Written answers submitted?</strong>
+            <span>Continue to the recorded video interview.</span>
+          </div>
+          <a class="primary button-link" id="willoLink" href="#" rel="noopener">Open Willo</a>
+        </div>
+      </section>
+
+      <p class="footer-note">Private recruitment assessment · Frozen marketplace evidence · Not affiliated with Ticketmaster, StubHub or Automatiq</p>
+    </div>
+  </main>
+
+  <dialog id="imageDialog">
+    <button class="dialog-close" id="closeDialog" type="button" aria-label="Close full-screen image">Close</button>
+    <img id="dialogImage" alt="">
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
