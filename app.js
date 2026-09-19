@@ -86,10 +86,9 @@
   const form = document.getElementById("responseForm");
   form.src = formUrl;
   document.getElementById("openFormNewTab").addEventListener("click", () => window.open(formUrl.replace("&embedded=true", ""), "_blank", "noopener"));
-  if (config.willoUrl) {
-    document.getElementById("videoNext").hidden = false;
-    document.getElementById("willoLink").href = config.willoUrl;
-  }
+  const videoParams = new URLSearchParams({cid: activeCid});
+  if (preview) videoParams.set("preview", "1");
+  document.getElementById("videoLink").href = `${config.videoPage}?${videoParams}`;
 
   const nav = document.getElementById("caseNav");
   const tabs = document.getElementById("evidenceTabs");
