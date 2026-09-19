@@ -107,9 +107,56 @@
         <div class="video-next" id="videoNext">
           <div>
             <strong>Written answers submitted?</strong>
-            <span>Continue to the video explanation stage using the same Candidate ID.</span>
+            <span>Stay on this page and record your five explanations below.</span>
           </div>
-          <a class="primary button-link" id="videoLink" href="#">Continue to video explanation</a>
+          <button class="primary" id="videoLink" type="button">Continue to video explanation</button>
+        </div>
+      </section>
+
+      <section class="inline-video-section card" id="inlineVideoSection" hidden>
+        <div class="inline-video-heading">
+          <div>
+            <p class="eyebrow">Video explanation</p>
+            <h2>Explain the decisions you submitted</h2>
+            <p>You will stay on this assessment page. The recorder opens below and uses your camera and microphone only after you grant permission.</p>
+          </div>
+          <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <strong>Recording portal being connected</strong>
+              <span>The embedded recorder will be activated before invitations are sent.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="inline-video-layout">
+          <div class="question-preview compact-question-preview">
+            <div class="question-preview-heading">
+              <div>
+                <p class="eyebrow">What you will record</p>
+                <h2>Five explanations</h2>
+              </div>
+              <span>About 8–10 minutes</span>
+            </div>
+            <ol class="video-question-list">
+              <li><strong>Purchase decision</strong><span>Explain what you would buy or avoid, maximum price, quantity and principal risk.</span><em>2 minutes</em></li>
+              <li><strong>Pricing decision</strong><span>Explain both listing prices, the evidence used and what would trigger repricing.</span><em>2 minutes</em></li>
+              <li><strong>Automatiq sale error</strong><span>Explain your sequence, how you protect the sale and when you escalate.</span><em>90 seconds</em></li>
+              <li><strong>Checkout payment error</strong><span>Explain your troubleshooting sequence and how you avoid a duplicate charge.</span><em>90 seconds</em></li>
+              <li><strong>Paused browser session</strong><span>Explain what happened, what you preserve and what you do next.</span><em>90 seconds</em></li>
+            </ol>
+            <div class="candidate-warning">Do not reveal passwords, payment-card information, customer data or account credentials.</div>
+          </div>
+
+          <div class="embedded-recorder" id="embeddedRecorder">
+            <div class="recorder-placeholder" id="recorderPlaceholder">
+              <span class="recorder-icon" aria-hidden="true">●</span>
+              <strong>Embedded video recorder</strong>
+              <p>The recording provider has not yet been connected. No candidate invitations will be released while this control is inactive.</p>
+              <button class="primary disabled-control" type="button" disabled>Start recording</button>
+            </div>
+            <iframe id="videoProviderFrame" title="Video explanation recorder" allow="camera; microphone; autoplay; encrypted-media; fullscreen; display-capture" hidden></iframe>
+          </div>
         </div>
       </section>
 

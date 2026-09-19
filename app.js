@@ -86,9 +86,33 @@
   const form = document.getElementById("responseForm");
   form.src = formUrl;
   document.getElementById("openFormNewTab").addEventListener("click", () => window.open(formUrl.replace("&embedded=true", ""), "_blank", "noopener"));
-  const videoParams = new URLSearchParams({cid: activeCid});
-  if (preview) videoParams.set("preview", "1");
-  document.getElementById("videoLink").href = `${config.videoPage}?${videoParams}`;
+  const videoButton = document.getElementById("videoLink");
+  const inlineVideoSection = document.getElementById("inlineVideoSection");
+  const providerFrame = document.getElementById("videoProviderFrame");
+  const providerStatus = document.getElementById("inlineProviderStatus");
+  videoButton.addEventListener("click", () => {
+    inlineVideoSection.hidden = false;
+    inlineVideoSection.scrollIntoView({behavior: "smooth", block: "start"});
+  });
+  if (config.videoProviderUrl) {
+    const providerUrl = new URL(config.videoProviderUrl, location.href);
+    providerFrame.src = providerUrl.toString();
+    providerFrame.hidden = false;
+    document.getElementById("recorderPlaceholder").hidden = true;
+    providerStatus.classList.add("ready");
+    document.querySelector("#inlineProviderStatus strong").textContent = "Embedded recorder ready";
+    document.querySelector("#inlineProviderStatus span:last-child").textContent = "Submit the written answers above, then complete all five recordings here.";
+    window.addEventListener("message", event => {
+      if (event.origin !== providerUrl.origin) return;
+      const type = event.data && event.data.type;
+      if (type === "interview.finished" || type === "videoask_submitted") {
+        localStorage.setItem(`ticket-assessment:${activeCid}:video`, "completed");
+        providerStatus.classList.add("ready");
+        document.querySelector("#inlineProviderStatus strong").textContent = "Video explanations submitted";
+        document.querySelector("#inlineProviderStatus span:last-child").textContent = "Your written and video assessment stages are complete.";
+      }
+    });
+  }
 
   const nav = document.getElementById("caseNav");
   const tabs = document.getElementById("evidenceTabs");
