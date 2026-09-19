@@ -5,13 +5,16 @@
     {
       number: 1,
       title: "Mixed inventory: would you buy?",
-      context: "James Taylor and His All-Star Band · 26 September 2026 · Hollywood, Florida · quantity 2",
+      context: "James Taylor and His All-Star Band · 26 September 2026 · Hollywood, Florida",
       taskTitle: "Make a purchase decision",
-      prompt: "Explain what you would buy or avoid and why. Include your view on Section 101 at $428 per ticket, Section 302 and the 100-level sections.",
+      prompt: "Explain what you would buy or avoid and why. Include your view on:\n\n• Section 101 at $428 per ticket\n• Section 302\n• The 100-level sections",
       evidence: [
         {label: "Ticketmaster · standard inventory", src: "assets/case1/ticketmaster-standard.webp", alt: "Frozen Ticketmaster standard inventory and event map", meta: "Primary market"},
         {label: "Ticketmaster · resale inventory", src: "assets/case1/ticketmaster-resale.webp", alt: "Frozen Ticketmaster verified resale inventory and event map", meta: "Primary marketplace resale"},
-        {label: "StubHub · market inventory", src: "assets/case1/stubhub-market.webp", alt: "Frozen StubHub inventory and asking prices", meta: "Secondary market"}
+        {label: "StubHub · market overview", src: "assets/case1/stubhub-market.webp", alt: "Frozen StubHub overview with venue map and asking prices", meta: "Secondary market · overview"},
+        {label: "StubHub · 200 level", src: "assets/case1/stubhub-zone-200-level.webp", alt: "Frozen StubHub asking prices for the 200-level zone", meta: "Secondary market · Sections 201–207"},
+        {label: "StubHub · 100 level rear and sides", src: "assets/case1/stubhub-zone-100-rear-side.webp", alt: "Frozen StubHub asking prices for rear and side 100-level sections", meta: "Secondary market · Sections 113 and 117"},
+        {label: "StubHub · 100 level front", src: "assets/case1/stubhub-zone-100-front.webp", alt: "Frozen StubHub asking prices for front 100-level sections", meta: "Secondary market · Sections 101–103"}
       ]
     },
     {
