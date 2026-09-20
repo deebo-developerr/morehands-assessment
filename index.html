@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Ticket Purchasing Assessment</title>
-  <link rel="stylesheet" href="styles.css?v=2026-09-20-guided-flow">
+  <link rel="stylesheet" href="styles.css?v=2026-09-20-one-video">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to assessment</a>
@@ -35,11 +35,11 @@
         <div>
           <p class="eyebrow">Five written cases · six recordings</p>
           <h2>Write your decision, then defend it on video.</h2>
-          <p>For each case: review the evidence, save your written answer, record the matching Hirevire explanation, then return here for the next case.</p>
+          <p>Work through one case at a time. After writing Case X, record only Hirevire Question X. Do not record later video answers early.</p>
         </div>
         <div class="snapshot-note">
           <strong>Keep this page open</strong>
-          <span>Your written work is saved in this browser. After every Hirevire recording, return to this page and use the blue continuation button.</span>
+          <span>Your written work is saved in this browser. After each matching video, stop in Hirevire—do not press its red Next button. Return here and press the blue continuation button.</span>
         </div>
       </section>
 
@@ -101,8 +101,8 @@
         </div>
 
         <div class="return-instruction">
-          <strong>Important</strong>
-          <span>Record the named question in Hirevire. When it is saved, return to this assessment page and press the blue continuation button below the recorder.</span>
+          <strong>ONE VIDEO ONLY</strong>
+          <span id="videoReturnInstructionText">Record only the Hirevire question named above. Do not record any later answers. After reviewing or retaking this video, do not press Hirevire’s red Next button. Return below and press the blue assessment button.</span>
         </div>
 
         <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
@@ -116,7 +116,7 @@
             <strong>Embedded video recorder</strong>
             <p>The recording provider could not be loaded. Do not continue until the recorder is available.</p>
           </div>
-          <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; autoplay; encrypted-media; fullscreen" hidden></iframe>
+          <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; encrypted-media; fullscreen" hidden></iframe>
         </div>
 
         <div class="video-return-actions">
@@ -150,7 +150,7 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=2026-09-20-guided-flow"></script>
-  <script src="app.js?v=2026-09-20-guided-flow"></script>
+  <script src="config.js?v=2026-09-20-one-video"></script>
+  <script src="app.js?v=2026-09-20-one-video"></script>
 </body>
 </html>

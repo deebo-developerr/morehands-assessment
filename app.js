@@ -291,7 +291,7 @@
     document.getElementById("recorderPlaceholder").hidden = true;
     providerStatus.classList.add("ready");
     providerStatus.querySelector("strong").textContent = "Hirevire recorder ready";
-    providerStatus.querySelector("span:last-child").textContent = "Record the named question below, then return to the blue assessment button.";
+    providerStatus.querySelector("span:last-child").textContent = "Record only the question named by the assessment. Do not complete later videos early.";
     providerLoaded = true;
   }
 
@@ -310,9 +310,13 @@
     document.getElementById("videoTitle").textContent = `Record Hirevire Question ${item.number}`;
     document.getElementById("videoStepBadge").textContent = `Question ${item.number} of 6`;
     document.getElementById("videoInstructions").textContent = item.videoPrompt;
-    document.getElementById("recordingConfirmText").textContent = `I have recorded Hirevire Question ${item.number} and can see it saved in Hirevire.`;
+    const beforeRecording = item.number === 1
+      ? "Record only Hirevire Question 1."
+      : `If Hirevire is still showing an earlier question, use its red Next button only until Question ${item.number} is displayed, before recording.`;
+    document.getElementById("videoReturnInstructionText").textContent = `${beforeRecording} After recording and reviewing Question ${item.number}, STOP. Do not press Hirevire’s red Next button and do not record later answers. Return below and press the blue assessment button.`;
+    document.getElementById("recordingConfirmText").textContent = `I recorded only Hirevire Question ${item.number} for this step. I did not record any later questions, and I can see Question ${item.number} saved.`;
     videoReturnButton.textContent = caseIndex < 4 ? `I recorded Question ${item.number} — continue to Case ${item.number + 1}` : "I recorded Question 5 — continue to the final fit question";
-    document.getElementById("videoReturnHint").textContent = `Do not continue until Hirevire Question ${item.number} has been recorded.`;
+    document.getElementById("videoReturnHint").textContent = `Made an error? Use Hirevire’s Retake before continuing. After Question ${item.number} is correct, press the blue button above—not the red Next button.`;
     updateProgress(`Case ${item.number} of 5 · video defence`);
     videoStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
@@ -330,6 +334,7 @@
     document.getElementById("videoTitle").textContent = "Record Hirevire Question 6 and submit Hirevire";
     document.getElementById("videoStepBadge").textContent = "Question 6 of 6";
     document.getElementById("videoInstructions").textContent = finalVideoPrompt;
+    document.getElementById("videoReturnInstructionText").textContent = "Record only Hirevire Question 6. You may use Retake before submission if it is offered. This is the final video: submit the complete Hirevire application, then return below and press the blue assessment button.";
     document.getElementById("recordingConfirmText").textContent = "I have recorded Question 6 and submitted the complete Hirevire application.";
     videoReturnButton.textContent = "Submit my written answers and finish";
     document.getElementById("videoReturnHint").textContent = "Only continue after Hirevire confirms that all six recordings were submitted.";
