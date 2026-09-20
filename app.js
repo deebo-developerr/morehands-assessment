@@ -109,7 +109,7 @@
     document.getElementById("recorderPlaceholder").hidden = true;
     providerStatus.classList.add("ready");
     document.querySelector("#inlineProviderStatus strong").textContent = "Hirevire recorder ready";
-    document.querySelector("#inlineProviderStatus span:last-child").textContent = "Submit the written answers above, then complete all five recordings here.";
+    document.querySelector("#inlineProviderStatus span:last-child").textContent = "Submit the written answers above, then complete all six recordings here.";
     window.addEventListener("message", event => {
       if (event.origin !== providerUrl.origin) return;
       const type = event.data && event.data.type;
