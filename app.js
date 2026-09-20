@@ -20,7 +20,7 @@
       ],
       evidence: [
         {label: "Ticketmaster · standard inventory", src: "assets/case1/ticketmaster-standard.webp", alt: "Frozen Ticketmaster standard inventory and event map", meta: "Primary market"},
-        {label: "Ticketmaster · resale inventory", src: "assets/case1/ticketmaster-resale.webp", alt: "Frozen Ticketmaster verified resale inventory and event map", meta: "Primary marketplace resale"},
+        {label: "Primary prices · zones and availability", src: "assets/case1/original-primary-prices.webp", alt: "Frozen original primary price ranges, availability and section map for the 100, 200 and 300 zones", meta: "Primary market · original prices"},
         {label: "StubHub · market overview", src: "assets/case1/stubhub-market.webp", alt: "Frozen StubHub overview with venue map and asking prices", meta: "Secondary market · overview"},
         {label: "StubHub · 200 level", src: "assets/case1/stubhub-zone-200-level.webp", alt: "Frozen StubHub asking prices for the 200-level zone", meta: "Secondary market · Sections 201–207"},
         {label: "StubHub · 100 level rear and sides", src: "assets/case1/stubhub-zone-100-rear-side.webp", alt: "Frozen StubHub asking prices for rear and side 100-level sections", meta: "Secondary market · Sections 113 and 117"},
