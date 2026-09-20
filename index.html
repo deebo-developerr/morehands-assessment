@@ -6,21 +6,17 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Ticket Purchasing Assessment</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2026-09-20-guided-flow">
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to case study</a>
+  <a class="skip-link" href="#main">Skip to assessment</a>
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">M</span>
-      <div>
-        <p class="eyebrow">Candidate assessment</p>
-        <h1>Ticket Purchasing Specialist</h1>
-      </div>
+      <div><p class="eyebrow">Candidate assessment</p><h1>Ticket Purchasing Specialist</h1></div>
     </div>
     <div class="candidate-chip" id="candidateChip" hidden>
-      <span>Candidate ID</span>
-      <strong id="candidateIdLabel"></strong>
+      <span>Candidate ID</span><strong id="candidateIdLabel"></strong>
       <button class="copy-button" id="copyCandidateId" type="button">Copy</button>
     </div>
   </header>
@@ -31,31 +27,31 @@
     <section id="accessGate" class="gate card" hidden>
       <p class="eyebrow">Personalised link required</p>
       <h2>Open the link from your invitation</h2>
-      <p>This assessment link is missing its candidate ID. Return to your invitation and use the full link provided.</p>
+      <p>This assessment link is missing its Candidate ID or application email. Return to your invitation and use the complete link provided.</p>
     </section>
 
     <div id="assessmentApp" hidden>
       <section class="intro card">
         <div>
-          <p class="eyebrow">Five frozen case studies</p>
-          <h2>Review the evidence. Make the call.</h2>
-          <p>Complete each case, then submit your written answers. Explain what you would do and why.</p>
+          <p class="eyebrow">Five written cases · six recordings</p>
+          <h2>Write your decision, then defend it on video.</h2>
+          <p>For each case: review the evidence, save your written answer, record the matching Hirevire explanation, then return here for the next case.</p>
         </div>
         <div class="snapshot-note">
-          <strong>Assessment snapshot</strong>
-          <span>Use only the evidence supplied. Do not search the live events or systems.</span>
+          <strong>Keep this page open</strong>
+          <span>Your written work is saved in this browser. After every Hirevire recording, return to this page and use the blue continuation button.</span>
         </div>
       </section>
 
-      <nav class="case-nav card" aria-label="Assessment cases">
+      <nav class="case-nav card" aria-label="Assessment progress">
         <div class="case-nav-track" id="caseNav"></div>
-        <div class="progress-wrap" aria-label="Assessment progress">
-          <span id="progressText">Case 1 of 5</span>
+        <div class="progress-wrap">
+          <span id="progressText">Case 1 written answer</span>
           <div class="progress-bar" aria-hidden="true"><span id="progressBar"></span></div>
         </div>
       </nav>
 
-      <section class="case-layout">
+      <section class="case-layout" id="writtenStage">
         <article class="evidence-card card" aria-labelledby="caseTitle">
           <div class="case-heading">
             <div>
@@ -71,95 +67,78 @@
             </div>
           </div>
           <div class="evidence-tabs" id="evidenceTabs" role="tablist" aria-label="Evidence images"></div>
-          <div class="viewer" id="viewer" tabindex="0" aria-label="Evidence image viewer">
-            <img id="evidenceImage" alt="">
-          </div>
-          <div class="evidence-caption">
-            <span id="evidenceLabel"></span>
-            <span id="evidenceMeta"></span>
-          </div>
+          <div class="viewer" id="viewer" tabindex="0" aria-label="Evidence image viewer"><img id="evidenceImage" alt=""></div>
+          <div class="evidence-caption"><span id="evidenceLabel"></span><span id="evidenceMeta"></span></div>
         </article>
 
         <aside class="task-column">
           <section class="task-card card">
-            <p class="eyebrow">Your task</p>
+            <p class="eyebrow">Written answer</p>
             <h2 id="taskTitle"></h2>
             <p id="taskPrompt"></p>
             <div class="inventory" id="inventory" hidden></div>
+            <form id="writtenCaseForm" novalidate>
+              <div class="written-fields" id="writtenFields"></div>
+              <p class="draft-state" id="draftState" aria-live="polite">Drafts are saved in this browser.</p>
+              <button class="primary case-submit" id="saveAndRecord" type="submit">Save answers and record Case 1 explanation</button>
+            </form>
           </section>
           <section class="case-controls card">
-            <button class="secondary" id="previousCase" type="button">Previous</button>
-            <button class="primary" id="nextCase" type="button">Next case</button>
+            <button class="secondary" id="previousCase" type="button">Review previous case</button>
+            <span id="caseControlHint">Complete the written fields to continue.</span>
           </section>
         </aside>
       </section>
 
-      <section class="submit-section card" id="submitSection">
-        <div class="submit-heading">
-          <div>
-            <p class="eyebrow">Written responses</p>
-            <h2>Submit your decisions</h2>
-            <p>Use the same email address you used in your application. Your candidate ID has been added automatically.</p>
-          </div>
-          <button class="secondary" id="openFormNewTab" type="button">Open form in new tab</button>
-        </div>
-        <iframe id="responseForm" title="Written assessment response form" loading="lazy"></iframe>
-        <div class="video-next" id="videoNext">
-          <div>
-            <strong>Written answers submitted?</strong>
-            <span>Stay on this page and record your six explanations below.</span>
-          </div>
-          <button class="primary" id="videoLink" type="button">Continue to video explanation</button>
-        </div>
-      </section>
-
       <section class="inline-video-section card" id="inlineVideoSection" hidden>
-        <div class="inline-video-heading">
+        <div class="video-step-banner">
           <div>
-            <p class="eyebrow">Video explanation</p>
-            <h2>Explain the decisions you submitted</h2>
-            <p>You will stay on this assessment page. The recorder opens below and uses your camera and microphone only after you grant permission.</p>
+            <p class="eyebrow" id="videoEyebrow">Case 1 video explanation</p>
+            <h2 id="videoTitle">Record Hirevire Question 1</h2>
+            <p id="videoInstructions"></p>
           </div>
-          <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
-            <span class="status-dot" aria-hidden="true"></span>
-            <div>
-              <strong>Recording portal being connected</strong>
-              <span>The embedded recorder will be activated before invitations are sent.</span>
-            </div>
-          </div>
+          <span class="step-badge" id="videoStepBadge">Question 1 of 6</span>
         </div>
 
-        <div class="inline-video-layout">
-          <div class="question-preview compact-question-preview">
-            <div class="question-preview-heading">
-              <div>
-                <p class="eyebrow">What you will record</p>
-                <h2>Six explanations</h2>
-              </div>
-              <span>About 10–12 minutes</span>
-            </div>
-            <ol class="video-question-list">
-              <li><strong>Purchase decision</strong><span>Explain what you would buy or avoid and why, including Section 101 at $428, Section 302 and the 100-level sections.</span><em>2 minutes</em></li>
-              <li><strong>Pricing decision</strong><span>Explain both listing prices, the evidence used and what would trigger repricing.</span><em>2 minutes</em></li>
-              <li><strong>Automatiq sale error</strong><span>Explain your sequence, how you protect the sale and when you escalate.</span><em>90 seconds</em></li>
-              <li><strong>Checkout payment error</strong><span>Explain your troubleshooting sequence and how you avoid a duplicate charge.</span><em>90 seconds</em></li>
-              <li><strong>Paused browser session</strong><span>Explain what happened, what you preserve and what you do next.</span><em>90 seconds</em></li>
-              <li><strong>Why you are a strong fit</strong><span>This is your opportunity to impress us. Tell us about any relevant experience, technical ability, software knowledge, or anything else you want us to know that would help you succeed in the role.</span><em>2 minutes</em></li>
-            </ol>
-            <div class="candidate-warning">Do not reveal passwords, payment-card information, customer data or account credentials.</div>
-          </div>
+        <div class="return-instruction">
+          <strong>Important</strong>
+          <span>Record the named question in Hirevire. When it is saved, return to this assessment page and press the blue continuation button below the recorder.</span>
+        </div>
 
-          <div class="embedded-recorder" id="embeddedRecorder">
-            <div class="recorder-placeholder" id="recorderPlaceholder">
-              <span class="recorder-icon" aria-hidden="true">●</span>
-              <strong>Embedded video recorder</strong>
-              <p>The recording provider has not yet been connected. No candidate invitations will be released while this control is inactive.</p>
-              <button class="primary disabled-control" type="button" disabled>Start recording</button>
-            </div>
-            <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; autoplay; encrypted-media; fullscreen" hidden></iframe>
+        <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <div><strong>Recording portal being connected</strong><span>Please keep this browser tab open.</span></div>
+        </div>
+
+        <div class="embedded-recorder" id="embeddedRecorder">
+          <div class="recorder-placeholder" id="recorderPlaceholder">
+            <span class="recorder-icon" aria-hidden="true">●</span>
+            <strong>Embedded video recorder</strong>
+            <p>The recording provider could not be loaded. Do not continue until the recorder is available.</p>
           </div>
+          <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; autoplay; encrypted-media; fullscreen" hidden></iframe>
+        </div>
+
+        <div class="video-return-actions">
+          <label class="recording-confirm"><input id="recordingConfirmed" type="checkbox"> <span id="recordingConfirmText">I have recorded the matching Hirevire answer.</span></label>
+          <button class="primary" id="videoReturnButton" type="button" disabled>I recorded Question 1 — continue to Case 2</button>
+          <p id="videoReturnHint">Complete the recording in Hirevire, then tick the confirmation above.</p>
         </div>
       </section>
+
+      <section class="completion card" id="completionSection" hidden>
+        <p class="eyebrow">Assessment complete</p>
+        <h2>Your written answers and Hirevire recordings have been submitted.</h2>
+        <p>Your written decisions, video links and defence transcripts will be available to the hiring team for review.</p>
+        <div class="completion-checks">
+          <span>✓ Written answers submitted</span>
+          <span>✓ Six Hirevire answers confirmed</span>
+          <span>✓ Candidate ID preserved</span>
+        </div>
+      </section>
+
+      <form id="writtenSubmitForm" method="post" target="writtenSubmitTarget" hidden></form>
+      <iframe id="writtenSubmitTarget" name="writtenSubmitTarget" title="Written response submission result" hidden></iframe>
 
       <p class="footer-note">Private recruitment assessment · Frozen marketplace evidence · Not affiliated with Ticketmaster, StubHub or Automatiq</p>
     </div>
@@ -171,7 +150,7 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=2026-09-20-question6"></script>
-  <script src="app.js?v=2026-09-20-question6"></script>
+  <script src="config.js?v=2026-09-20-guided-flow"></script>
+  <script src="app.js?v=2026-09-20-guided-flow"></script>
 </body>
 </html>
