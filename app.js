@@ -94,10 +94,13 @@
   const app = document.getElementById("assessmentApp");
   const gate = document.getElementById("accessGate");
   const stateKey = `ticket-assessment:${activeCid}:guided-v1`;
-  let state = {answers: {}, writtenComplete: {}, recorded: {}, currentCase: 0, phase: "written", submitted: false};
+  let state = {answers: {}, writtenComplete: {}, serverSaved: {}, recorded: {}, currentCase: 0, phase: "written", submitted: false};
   let current = 0;
   let currentEvidence = 0;
+  let providerStarted = false;
   let providerLoaded = false;
+  let providerLoadTimer = null;
+  let recoverySubmission = null;
   let submissionPending = false;
   let submissionTimer = null;
 
@@ -107,7 +110,7 @@
   }
   try {
     const saved = JSON.parse(localStorage.getItem(stateKey) || "null");
-    if (saved && typeof saved === "object") state = {...state, ...saved, answers: saved.answers || {}, writtenComplete: saved.writtenComplete || {}, recorded: saved.recorded || {}};
+    if (saved && typeof saved === "object") state = {...state, ...saved, answers: saved.answers || {}, writtenComplete: saved.writtenComplete || {}, serverSaved: saved.serverSaved || {}, recorded: saved.recorded || {}};
   } catch (_) {}
   current = Number.isInteger(state.currentCase) && state.currentCase >= 0 && state.currentCase < cases.length ? state.currentCase : 0;
 
@@ -130,6 +133,9 @@
   const providerStatus = document.getElementById("inlineProviderStatus");
   const recordingConfirmed = document.getElementById("recordingConfirmed");
   const videoReturnButton = document.getElementById("videoReturnButton");
+  const openRecorderDirect = document.getElementById("openRecorderDirect");
+  const recoverySubmitTarget = document.getElementById("recoverySubmitTarget");
+  const sendRecordingIssue = document.getElementById("sendRecordingIssue");
 
   cases.forEach((item, index) => {
     const button = document.createElement("button");
@@ -218,8 +224,9 @@
     control.value = state.answers[field.key] || "";
     control.addEventListener("input", () => {
       state.answers[field.key] = control.value;
+      delete state.serverSaved[current];
       saveState();
-      document.getElementById("draftState").textContent = "Draft saved in this browser.";
+      document.getElementById("draftState").textContent = "Draft saved in this browser. Save the case to refresh the secure recovery copy.";
     });
     wrapper.append(labelText, control);
     return wrapper;
@@ -239,7 +246,9 @@
     document.getElementById("caseContext").textContent = item.context;
     document.getElementById("taskTitle").textContent = item.taskTitle;
     document.getElementById("taskPrompt").textContent = item.prompt;
-    document.getElementById("saveAndRecord").textContent = `Save answers and record Case ${item.number} explanation`;
+    const saveButton = document.getElementById("saveAndRecord");
+    saveButton.disabled = false;
+    saveButton.textContent = `Save answers securely and record Case ${item.number} explanation`;
     document.getElementById("caseControlHint").textContent = "Complete the written fields to continue to the matching recording. Previous cases lock after their defence is recorded.";
     const previous = document.getElementById("previousCase");
     previous.disabled = true;
@@ -261,7 +270,9 @@
 
     const fields = document.getElementById("writtenFields");
     fields.replaceChildren(...item.fields.map(makeField));
-    document.getElementById("draftState").textContent = "Drafts are saved in this browser.";
+    document.getElementById("draftState").textContent = state.serverSaved[index]
+      ? "A secure recovery copy of this case was saved. New edits remain in this browser until you save again."
+      : "Drafts are saved in this browser. A secure recovery copy is created before video.";
 
     tabs.replaceChildren();
     item.evidence.forEach((ev, i) => {
@@ -278,24 +289,120 @@
     writtenStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
 
-  function ensureProviderLoaded() {
-    if (providerLoaded || !config.videoProviderUrl) return;
-    const providerUrl = new URL(config.videoProviderUrl, location.href);
-    providerUrl.searchParams.set("custom", activeCid);
-    providerUrl.searchParams.set("email", candidateEmail);
+  function providerUrl() {
+    const url = new URL(config.videoProviderUrl, location.href);
+    url.searchParams.set("custom", activeCid);
+    url.searchParams.set("email", candidateEmail);
     const fullName = String(state.answers.fullName || "").trim().split(/\s+/);
-    if (fullName[0]) providerUrl.searchParams.set("first_name", fullName[0]);
-    if (fullName.length > 1) providerUrl.searchParams.set("last_name", fullName.slice(1).join(" "));
-    providerFrame.src = providerUrl.toString();
-    providerFrame.hidden = false;
-    document.getElementById("recorderPlaceholder").hidden = true;
-    providerStatus.classList.add("ready");
-    providerStatus.querySelector("strong").textContent = "Hirevire recorder ready";
-    providerStatus.querySelector("span:last-child").textContent = "Record only the question named by the assessment. Do not complete later videos early.";
-    providerLoaded = true;
+    if (fullName[0]) url.searchParams.set("first_name", fullName[0]);
+    if (fullName.length > 1) url.searchParams.set("last_name", fullName.slice(1).join(" "));
+    return url.toString();
   }
 
+  function setProviderStatus(kind, title, detail) {
+    providerStatus.classList.remove("ready", "status-loaded", "status-warning", "status-error");
+    if (kind) providerStatus.classList.add(kind);
+    providerStatus.querySelector("strong").textContent = title;
+    providerStatus.querySelector("span:last-child").textContent = detail;
+  }
+
+  function ensureProviderLoaded() {
+    if (!config.videoProviderUrl) {
+      setProviderStatus("status-error", "Hirevire link unavailable", "Please report the problem to the hiring team. Your written answers remain securely saved.");
+      return;
+    }
+    const url = providerUrl();
+    openRecorderDirect.href = url;
+    if (providerStarted) return;
+    providerStarted = true;
+    providerLoaded = false;
+    setProviderStatus("", "Loading Hirevire", "The page is loading; camera and microphone checks happen inside Hirevire.");
+    providerFrame.src = url;
+    clearTimeout(providerLoadTimer);
+    providerLoadTimer = setTimeout(() => {
+      if (providerLoaded) return;
+      setProviderStatus("status-warning", "Embedded recorder is taking longer than expected", "Use “Open recorder in a new tab” above. Your securely saved written answers will remain here.");
+      document.getElementById("recorderPlaceholder").hidden = false;
+    }, 12000);
+  }
+
+  providerFrame.addEventListener("load", () => {
+    if (!providerStarted) return;
+    providerLoaded = true;
+    clearTimeout(providerLoadTimer);
+    providerFrame.hidden = false;
+    document.getElementById("recorderPlaceholder").hidden = true;
+    setProviderStatus("status-loaded", "Hirevire page loaded", "Camera, microphone and recording health are checked inside Hirevire. If recording fails, use the new-tab option above.");
+  });
+
+  providerFrame.addEventListener("error", () => {
+    clearTimeout(providerLoadTimer);
+    providerLoaded = false;
+    providerFrame.hidden = true;
+    document.getElementById("recorderPlaceholder").hidden = false;
+    setProviderStatus("status-error", "Embedded Hirevire page could not load", "Use “Open recorder in a new tab” above. Your securely saved written answers will remain here.");
+  });
+
+  function browserInformation() {
+    return JSON.stringify({
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      screen: `${window.screen.width}x${window.screen.height}`,
+      standalone: Boolean(window.navigator.standalone),
+      online: navigator.onLine,
+      pageUrl: `${location.origin}${location.pathname}`,
+      providerState: providerLoaded ? "frame-loaded" : (providerStarted ? "loading-or-failed" : "not-started")
+    });
+  }
+
+  function submitRecoveryEvent({eventType, stage, answerSnapshot = "", issueCategory = "", issueDetails = ""}) {
+    return new Promise((resolve, reject) => {
+      if (!config.recoveryFormResponseUrl || !config.recoveryEntries || recoverySubmission) {
+        reject(new Error("Secure recovery channel is unavailable"));
+        return;
+      }
+      const form = document.getElementById("recoverySubmitForm");
+      const entries = config.recoveryEntries;
+      form.replaceChildren();
+      form.action = config.recoveryFormResponseUrl;
+      addHidden(form, `entry.${entries.eventType}`, eventType);
+      addHidden(form, `entry.${entries.candidateId}`, activeCid);
+      addHidden(form, `entry.${entries.applicationEmail}`, candidateEmail);
+      addHidden(form, `entry.${entries.fullName}`, state.answers.fullName || "");
+      addHidden(form, `entry.${entries.stage}`, stage);
+      addHidden(form, `entry.${entries.answerSnapshot}`, answerSnapshot);
+      addHidden(form, `entry.${entries.issueCategory}`, issueCategory);
+      addHidden(form, `entry.${entries.issueDetails}`, issueDetails);
+      addHidden(form, `entry.${entries.browserInformation}`, browserInformation());
+      addHidden(form, `entry.${entries.clientTimestamp}`, new Date().toISOString());
+      addHidden(form, "fvv", "1");
+      addHidden(form, "draftResponse", "[]");
+      addHidden(form, "pageHistory", "0");
+      const timer = setTimeout(() => {
+        if (!recoverySubmission) return;
+        recoverySubmission = null;
+        reject(new Error("Secure save did not confirm within 15 seconds"));
+      }, 15000);
+      recoverySubmission = {resolve, reject, timer, eventType};
+      form.submit();
+    });
+  }
+
+  recoverySubmitTarget.addEventListener("load", () => {
+    if (!recoverySubmission) return;
+    const pending = recoverySubmission;
+    recoverySubmission = null;
+    clearTimeout(pending.timer);
+    pending.resolve();
+  });
+
   function showVideo(caseIndex) {
+    if (!state.serverSaved[caseIndex]) {
+      showWritten(caseIndex);
+      document.getElementById("draftState").textContent = "Before opening or returning to Hirevire, save this case to create a secure recovery copy.";
+      return;
+    }
     current = caseIndex;
     state.phase = "video";
     saveState();
@@ -322,6 +429,12 @@
   }
 
   function showFinalVideo() {
+    const missingBackup = cases.findIndex((_, index) => state.writtenComplete[index] && !state.serverSaved[index]);
+    if (missingBackup !== -1) {
+      showWritten(missingBackup);
+      document.getElementById("draftState").textContent = "Your earlier browser draft is intact. Save this case once to add the new secure recovery copy, then continue.";
+      return;
+    }
     state.phase = "final-video";
     saveState();
     ensureProviderLoaded();
@@ -342,14 +455,59 @@
     videoStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
 
-  document.getElementById("writtenCaseForm").addEventListener("submit", event => {
+  document.getElementById("writtenCaseForm").addEventListener("submit", async event => {
     event.preventDefault();
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
     for (const field of cases[current].fields) state.answers[field.key] = String(form.elements[field.key].value || "").trim();
-    state.writtenComplete[current] = true;
     saveState();
-    showVideo(current);
+    const button = document.getElementById("saveAndRecord");
+    const draftState = document.getElementById("draftState");
+    button.disabled = true;
+    button.textContent = `Saving Case ${current + 1} securely…`;
+    draftState.textContent = "Saving a server-side recovery copy before opening Hirevire…";
+    try {
+      await submitRecoveryEvent({
+        eventType: "case_saved",
+        stage: `case-${current + 1}`,
+        answerSnapshot: JSON.stringify(state.answers)
+      });
+      state.writtenComplete[current] = true;
+      state.serverSaved[current] = new Date().toISOString();
+      saveState();
+      draftState.textContent = "Secure recovery copy saved.";
+      if (state.recorded[current] && current === 4) showFinalVideo();
+      else if (state.recorded[current] && current < 4) showWritten(current + 1);
+      else showVideo(current);
+    } catch (error) {
+      button.disabled = false;
+      button.textContent = `Retry secure save for Case ${current + 1}`;
+      draftState.textContent = "Your answers remain saved in this browser, but the secure backup did not confirm. Please check your connection and retry.";
+      showToast(error.message || "Secure save did not confirm");
+    }
+  });
+
+  sendRecordingIssue.addEventListener("click", async () => {
+    const category = document.getElementById("recordingIssueCategory").value;
+    const details = document.getElementById("recordingIssueDetails").value.trim();
+    const status = document.getElementById("recordingIssueStatus");
+    sendRecordingIssue.disabled = true;
+    status.textContent = "Sending technical report…";
+    try {
+      await submitRecoveryEvent({
+        eventType: "recording_issue",
+        stage: state.phase === "final-video" ? "question-6" : `question-${current + 1}`,
+        issueCategory: category,
+        issueDetails: details
+      });
+      status.textContent = "Problem report sent. Use “Open recorder in a new tab” above to continue.";
+      showToast("Recording problem reported");
+    } catch (error) {
+      status.textContent = "The report did not confirm. Your written answers are still safe; please retry or contact the hiring team.";
+      showToast(error.message || "Problem report did not confirm");
+    } finally {
+      sendRecordingIssue.disabled = false;
+    }
   });
 
   recordingConfirmed.addEventListener("change", () => {
@@ -422,7 +580,7 @@
     writtenStage.hidden = true;
     videoStage.hidden = true;
     completionStage.hidden = false;
-    updateProgress("Assessment complete");
+    updateProgress("Written assessment submitted");
     document.getElementById("progressBar").style.width = "100%";
     completionStage.scrollIntoView({behavior: "smooth", block: "start"});
   });
@@ -452,7 +610,7 @@
     writtenStage.hidden = true;
     videoStage.hidden = true;
     completionStage.hidden = false;
-    updateProgress("Assessment complete");
+    updateProgress("Written assessment submitted");
     document.getElementById("progressBar").style.width = "100%";
   } else if (state.phase === "final-video") {
     showFinalVideo();

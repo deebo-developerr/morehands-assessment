@@ -38,8 +38,8 @@
           <p>Work through one case at a time. After writing Case X, record only Hirevire Question X. Do not record later video answers early.</p>
         </div>
         <div class="snapshot-note">
-          <strong>Keep this page open</strong>
-          <span>Your written work is saved in this browser. After each matching video, stop in Hirevire—do not press its red Next button. Return here and press the blue continuation button.</span>
+          <strong>Your work is protected</strong>
+          <span>Each written case is saved securely before its matching video opens. Keep this page open, and after each video return here to continue.</span>
         </div>
       </section>
 
@@ -107,17 +107,42 @@
 
         <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
           <span class="status-dot" aria-hidden="true"></span>
-          <div><strong>Recording portal being connected</strong><span>Please keep this browser tab open.</span></div>
+          <div><strong>Loading Hirevire</strong><span>The page is loading; camera and microphone checks happen inside Hirevire.</span></div>
         </div>
+
+        <section class="recorder-recovery" aria-labelledby="recorderRecoveryTitle">
+          <div>
+            <h3 id="recorderRecoveryTitle">Having trouble with the embedded recorder?</h3>
+            <p>Open the same prefilled Hirevire application in a separate browser tab. Your Candidate ID and email will remain attached.</p>
+          </div>
+          <a class="secondary button-link" id="openRecorderDirect" target="_blank" rel="noopener noreferrer">Open recorder in a new tab</a>
+        </section>
 
         <div class="embedded-recorder" id="embeddedRecorder">
           <div class="recorder-placeholder" id="recorderPlaceholder">
             <span class="recorder-icon" aria-hidden="true">●</span>
-            <strong>Embedded video recorder</strong>
-            <p>The recording provider could not be loaded. Do not continue until the recorder is available.</p>
+            <strong>Loading embedded Hirevire page</strong>
+            <p>If it does not load, use “Open recorder in a new tab” above. Your securely saved written answers will remain available here.</p>
           </div>
           <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; encrypted-media; fullscreen" hidden></iframe>
         </div>
+
+        <details class="recording-problem" id="recordingProblem">
+          <summary>Report a recording problem</summary>
+          <p>This sends technical context only. It does not capture your camera, microphone, recording or passwords.</p>
+          <label for="recordingIssueCategory">What went wrong?</label>
+          <select id="recordingIssueCategory">
+            <option value="Recorder did not load">Recorder did not load</option>
+            <option value="Camera or microphone permission">Camera or microphone permission</option>
+            <option value="Recording failed or froze">Recording failed or froze</option>
+            <option value="Upload or save failed">Upload or save failed</option>
+            <option value="Other">Other</option>
+          </select>
+          <label for="recordingIssueDetails">Optional error text or details</label>
+          <textarea id="recordingIssueDetails" rows="3" maxlength="1200" placeholder="Paste the visible error message or briefly describe what happened."></textarea>
+          <button class="secondary" id="sendRecordingIssue" type="button">Send problem report</button>
+          <p class="draft-state" id="recordingIssueStatus" aria-live="polite"></p>
+        </details>
 
         <div class="video-return-actions">
           <label class="recording-confirm"><input id="recordingConfirmed" type="checkbox"> <span id="recordingConfirmText">I have recorded the matching Hirevire answer.</span></label>
@@ -127,18 +152,20 @@
       </section>
 
       <section class="completion card" id="completionSection" hidden>
-        <p class="eyebrow">Assessment complete</p>
-        <h2>Your written answers and Hirevire recordings have been submitted.</h2>
-        <p>Your written decisions, video links and defence transcripts will be available to the hiring team for review.</p>
+        <p class="eyebrow">Written assessment submitted</p>
+        <h2>Your written answers have been submitted.</h2>
+        <p>The hiring team will separately verify your Hirevire application, recordings and transcripts before marking the full assessment complete.</p>
         <div class="completion-checks">
           <span>✓ Written answers submitted</span>
-          <span>✓ Six Hirevire answers confirmed</span>
+          <span>✓ Candidate confirmed Hirevire submission</span>
           <span>✓ Candidate ID preserved</span>
         </div>
       </section>
 
       <form id="writtenSubmitForm" method="post" target="writtenSubmitTarget" hidden></form>
       <iframe id="writtenSubmitTarget" name="writtenSubmitTarget" title="Written response submission result" hidden></iframe>
+      <form id="recoverySubmitForm" method="post" target="recoverySubmitTarget" hidden></form>
+      <iframe id="recoverySubmitTarget" name="recoverySubmitTarget" title="Secure draft and problem report submission result" hidden></iframe>
 
       <p class="footer-note">Private recruitment assessment · Frozen marketplace evidence · Not affiliated with Ticketmaster, StubHub or Automatiq</p>
     </div>
@@ -150,7 +177,7 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=2026-09-20-one-video"></script>
-  <script src="app.js?v=2026-09-20-primary-prices"></script>
+  <script src="config.js?v=2026-09-21-video-recovery"></script>
+  <script src="app.js?v=2026-09-21-video-recovery"></script>
 </body>
 </html>

@@ -20,5 +20,18 @@ window.ASSESSMENT_CONFIG = {
     declaration: "263456498"
   },
   videoProviderUrl: "https://app.hirevire.com/applications/543c64e9-e2e0-4eda-8740-66b1bc4d7307?lang=EN",
-  version: "2026-09-20-guided-flow"
+  recoveryFormResponseUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeRkFOIJBh89TJsqYerEy3TvxpJaiWyoURDuWeSc5Cf4c5F3g/formResponse",
+  recoveryEntries: {
+    eventType: "385464817",
+    candidateId: "2065870477",
+    applicationEmail: "1081922061",
+    fullName: "665181765",
+    stage: "407076114",
+    answerSnapshot: "1357299715",
+    issueCategory: "1971002731",
+    issueDetails: "2081728646",
+    browserInformation: "613202472",
+    clientTimestamp: "1646254060"
+  },
+  version: "2026-09-21-video-recovery"
 };
