@@ -100,7 +100,6 @@
   let providerStarted = false;
   let providerLoaded = false;
   let providerLoadTimer = null;
-  let recoverySubmission = null;
   let submissionPending = false;
   let submissionTimer = null;
 
@@ -134,7 +133,6 @@
   const recordingConfirmed = document.getElementById("recordingConfirmed");
   const videoReturnButton = document.getElementById("videoReturnButton");
   const openRecorderDirect = document.getElementById("openRecorderDirect");
-  const recoverySubmitTarget = document.getElementById("recoverySubmitTarget");
   const sendRecordingIssue = document.getElementById("sendRecordingIssue");
 
   cases.forEach((item, index) => {
@@ -226,7 +224,7 @@
       state.answers[field.key] = control.value;
       delete state.serverSaved[current];
       saveState();
-      document.getElementById("draftState").textContent = "Draft saved in this browser. Save the case to refresh the secure recovery copy.";
+      document.getElementById("draftState").textContent = "Draft saved in this browser. Save the case to request a fresh online recovery backup.";
     });
     wrapper.append(labelText, control);
     return wrapper;
@@ -248,7 +246,7 @@
     document.getElementById("taskPrompt").textContent = item.prompt;
     const saveButton = document.getElementById("saveAndRecord");
     saveButton.disabled = false;
-    saveButton.textContent = `Save answers securely and record Case ${item.number} explanation`;
+    saveButton.textContent = `Save answers and record Case ${item.number} explanation`;
     document.getElementById("caseControlHint").textContent = "Complete the written fields to continue to the matching recording. Previous cases lock after their defence is recorded.";
     const previous = document.getElementById("previousCase");
     previous.disabled = true;
@@ -271,8 +269,8 @@
     const fields = document.getElementById("writtenFields");
     fields.replaceChildren(...item.fields.map(makeField));
     document.getElementById("draftState").textContent = state.serverSaved[index]
-      ? "A secure recovery copy of this case was saved. New edits remain in this browser until you save again."
-      : "Drafts are saved in this browser. A secure recovery copy is created before video.";
+      ? "Saved in this browser; an online recovery backup was requested when you last continued."
+      : "Drafts are saved in this browser. Continuing also requests an online recovery backup.";
 
     tabs.replaceChildren();
     item.evidence.forEach((ev, i) => {
@@ -308,7 +306,7 @@
 
   function ensureProviderLoaded() {
     if (!config.videoProviderUrl) {
-      setProviderStatus("status-error", "Hirevire link unavailable", "Please report the problem to the hiring team. Your written answers remain securely saved.");
+      setProviderStatus("status-error", "Hirevire link unavailable", "Please report the problem to the hiring team. Your written answers remain saved in this browser.");
       return;
     }
     const url = providerUrl();
@@ -321,7 +319,7 @@
     clearTimeout(providerLoadTimer);
     providerLoadTimer = setTimeout(() => {
       if (providerLoaded) return;
-      setProviderStatus("status-warning", "Embedded recorder is taking longer than expected", "Use “Open recorder in a new tab” above. Your securely saved written answers will remain here.");
+      setProviderStatus("status-warning", "Embedded recorder is taking longer than expected", "Use “Open recorder in a new tab” above. Your browser-saved written answers will remain here.");
       document.getElementById("recorderPlaceholder").hidden = false;
     }, 12000);
   }
@@ -332,7 +330,7 @@
     clearTimeout(providerLoadTimer);
     providerFrame.hidden = false;
     document.getElementById("recorderPlaceholder").hidden = true;
-    setProviderStatus("status-loaded", "Hirevire page loaded", "Camera, microphone and recording health are checked inside Hirevire. If recording fails, use the new-tab option above.");
+    setProviderStatus("status-warning", "Hirevire frame responded", "This only confirms that the embedded frame navigated. It does not confirm camera, microphone, recording or submission. Use the new-tab option if anything looks wrong.");
   });
 
   providerFrame.addEventListener("error", () => {
@@ -340,7 +338,7 @@
     providerLoaded = false;
     providerFrame.hidden = true;
     document.getElementById("recorderPlaceholder").hidden = false;
-    setProviderStatus("status-error", "Embedded Hirevire page could not load", "Use “Open recorder in a new tab” above. Your securely saved written answers will remain here.");
+    setProviderStatus("status-error", "Embedded Hirevire page could not load", "Use “Open recorder in a new tab” above. Your browser-saved written answers will remain here.");
   });
 
   function browserInformation() {
@@ -357,52 +355,34 @@
   }
 
   function submitRecoveryEvent({eventType, stage, answerSnapshot = "", issueCategory = "", issueDetails = ""}) {
-    return new Promise((resolve, reject) => {
-      if (!config.recoveryFormResponseUrl || !config.recoveryEntries || recoverySubmission) {
-        reject(new Error("Secure recovery channel is unavailable"));
-        return;
-      }
-      const form = document.getElementById("recoverySubmitForm");
-      const entries = config.recoveryEntries;
-      form.replaceChildren();
-      form.action = config.recoveryFormResponseUrl;
-      addHidden(form, `entry.${entries.eventType}`, eventType);
-      addHidden(form, `entry.${entries.candidateId}`, activeCid);
-      addHidden(form, `entry.${entries.applicationEmail}`, candidateEmail);
-      addHidden(form, `entry.${entries.fullName}`, state.answers.fullName || "");
-      addHidden(form, `entry.${entries.stage}`, stage);
-      addHidden(form, `entry.${entries.answerSnapshot}`, answerSnapshot);
-      addHidden(form, `entry.${entries.issueCategory}`, issueCategory);
-      addHidden(form, `entry.${entries.issueDetails}`, issueDetails);
-      addHidden(form, `entry.${entries.browserInformation}`, browserInformation());
-      addHidden(form, `entry.${entries.clientTimestamp}`, new Date().toISOString());
-      addHidden(form, "fvv", "1");
-      addHidden(form, "draftResponse", "[]");
-      addHidden(form, "pageHistory", "0");
-      const timer = setTimeout(() => {
-        if (!recoverySubmission) return;
-        recoverySubmission = null;
-        reject(new Error("Secure save did not confirm within 15 seconds"));
-      }, 15000);
-      recoverySubmission = {resolve, reject, timer, eventType};
-      form.submit();
-    });
+    if (!config.recoveryFormResponseUrl || !config.recoveryEntries) {
+      throw new Error("Online backup channel is unavailable");
+    }
+    const form = document.createElement("form");
+    form.method = "post";
+    form.target = "recoverySubmitTarget";
+    form.hidden = true;
+    const entries = config.recoveryEntries;
+    form.action = config.recoveryFormResponseUrl;
+    addHidden(form, `entry.${entries.eventType}`, eventType);
+    addHidden(form, `entry.${entries.candidateId}`, activeCid);
+    addHidden(form, `entry.${entries.applicationEmail}`, candidateEmail);
+    addHidden(form, `entry.${entries.fullName}`, state.answers.fullName || "");
+    addHidden(form, `entry.${entries.stage}`, stage);
+    addHidden(form, `entry.${entries.answerSnapshot}`, answerSnapshot);
+    addHidden(form, `entry.${entries.issueCategory}`, issueCategory);
+    addHidden(form, `entry.${entries.issueDetails}`, issueDetails);
+    addHidden(form, `entry.${entries.browserInformation}`, browserInformation());
+    addHidden(form, `entry.${entries.clientTimestamp}`, new Date().toISOString());
+    addHidden(form, "fvv", "1");
+    addHidden(form, "draftResponse", "[]");
+    addHidden(form, "pageHistory", "0");
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => form.remove(), 30000);
   }
 
-  recoverySubmitTarget.addEventListener("load", () => {
-    if (!recoverySubmission) return;
-    const pending = recoverySubmission;
-    recoverySubmission = null;
-    clearTimeout(pending.timer);
-    pending.resolve();
-  });
-
   function showVideo(caseIndex) {
-    if (!state.serverSaved[caseIndex]) {
-      showWritten(caseIndex);
-      document.getElementById("draftState").textContent = "Before opening or returning to Hirevire, save this case to create a secure recovery copy.";
-      return;
-    }
     current = caseIndex;
     state.phase = "video";
     saveState();
@@ -429,12 +409,6 @@
   }
 
   function showFinalVideo() {
-    const missingBackup = cases.findIndex((_, index) => state.writtenComplete[index] && !state.serverSaved[index]);
-    if (missingBackup !== -1) {
-      showWritten(missingBackup);
-      document.getElementById("draftState").textContent = "Your earlier browser draft is intact. Save this case once to add the new secure recovery copy, then continue.";
-      return;
-    }
     state.phase = "final-video";
     saveState();
     ensureProviderLoaded();
@@ -455,56 +429,49 @@
     videoStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
 
-  document.getElementById("writtenCaseForm").addEventListener("submit", async event => {
+  document.getElementById("writtenCaseForm").addEventListener("submit", event => {
     event.preventDefault();
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
     for (const field of cases[current].fields) state.answers[field.key] = String(form.elements[field.key].value || "").trim();
-    saveState();
-    const button = document.getElementById("saveAndRecord");
+    state.writtenComplete[current] = true;
     const draftState = document.getElementById("draftState");
-    button.disabled = true;
-    button.textContent = `Saving Case ${current + 1} securely…`;
-    draftState.textContent = "Saving a server-side recovery copy before opening Hirevire…";
     try {
-      await submitRecoveryEvent({
+      submitRecoveryEvent({
         eventType: "case_saved",
         stage: `case-${current + 1}`,
         answerSnapshot: JSON.stringify(state.answers)
       });
-      state.writtenComplete[current] = true;
-      state.serverSaved[current] = new Date().toISOString();
-      saveState();
-      draftState.textContent = "Secure recovery copy saved.";
-      if (state.recorded[current] && current === 4) showFinalVideo();
-      else if (state.recorded[current] && current < 4) showWritten(current + 1);
-      else showVideo(current);
+      state.serverSaved[current] = `requested:${new Date().toISOString()}`;
+      draftState.textContent = "Saved in this browser. An online recovery backup was requested.";
     } catch (error) {
-      button.disabled = false;
-      button.textContent = `Retry secure save for Case ${current + 1}`;
-      draftState.textContent = "Your answers remain saved in this browser, but the secure backup did not confirm. Please check your connection and retry.";
-      showToast(error.message || "Secure save did not confirm");
+      delete state.serverSaved[current];
+      draftState.textContent = "Saved in this browser. The online backup could not be requested, but you can continue to Hirevire.";
     }
+    saveState();
+    if (state.recorded[current] && current === 4) showFinalVideo();
+    else if (state.recorded[current] && current < 4) showWritten(current + 1);
+    else showVideo(current);
   });
 
-  sendRecordingIssue.addEventListener("click", async () => {
+  sendRecordingIssue.addEventListener("click", () => {
     const category = document.getElementById("recordingIssueCategory").value;
     const details = document.getElementById("recordingIssueDetails").value.trim();
     const status = document.getElementById("recordingIssueStatus");
     sendRecordingIssue.disabled = true;
-    status.textContent = "Sending technical report…";
+    status.textContent = "Submitting technical report…";
     try {
-      await submitRecoveryEvent({
+      submitRecoveryEvent({
         eventType: "recording_issue",
         stage: state.phase === "final-video" ? "question-6" : `question-${current + 1}`,
         issueCategory: category,
         issueDetails: details
       });
-      status.textContent = "Problem report sent. Use “Open recorder in a new tab” above to continue.";
-      showToast("Recording problem reported");
+      status.textContent = "Report request started. This page cannot verify receipt. Use “Open recorder in a new tab” above to continue.";
+      showToast("Recording problem report requested");
     } catch (error) {
-      status.textContent = "The report did not confirm. Your written answers are still safe; please retry or contact the hiring team.";
-      showToast(error.message || "Problem report did not confirm");
+      status.textContent = "The report could not be submitted. Your written answers are still safe; please contact the hiring team.";
+      showToast("Problem report could not be submitted");
     } finally {
       sendRecordingIssue.disabled = false;
     }
