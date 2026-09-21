@@ -141,6 +141,10 @@
     button.className = "case-tab";
     button.dataset.number = String(item.number);
     button.textContent = `Case ${item.number}`;
+    button.addEventListener("click", () => {
+      if (state.submitted) return;
+      showWritten(index);
+    });
     nav.appendChild(button);
   });
 
@@ -170,8 +174,15 @@
     [...nav.children].forEach((button, index) => {
       button.classList.toggle("visited", Boolean(state.writtenComplete[index]));
       button.classList.toggle("recorded", Boolean(state.recorded[index]));
-      button.disabled = index !== current || videoStage.hidden === false;
-      button.toggleAttribute("aria-current", index === current && writtenStage.hidden === false);
+      button.classList.toggle("pending", Boolean(state.writtenComplete[index]) && !state.recorded[index]);
+      button.disabled = Boolean(state.submitted);
+      if (index === current) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+      const status = state.recorded[index]
+        ? "written answer and video recorded"
+        : (state.writtenComplete[index] ? "written answer saved; video still pending" : "written answer not yet completed");
+      button.setAttribute("aria-label", `Open Case ${index + 1} written section — ${status}`);
+      button.title = `Open Case ${index + 1}: ${status}`;
     });
   }
 
@@ -247,7 +258,7 @@
     const saveButton = document.getElementById("saveAndRecord");
     saveButton.disabled = false;
     saveButton.textContent = `Save answers and record Case ${item.number} explanation`;
-    document.getElementById("caseControlHint").textContent = "Complete the written fields to continue to the matching recording. Previous cases lock after their defence is recorded.";
+    document.getElementById("caseControlHint").textContent = "Use the case tabs above to review or complete written cases in any order. You may record videos later, but all six are required before final submission.";
     const previous = document.getElementById("previousCase");
     previous.disabled = true;
     previous.textContent = index === 0 ? "Start with Case 1" : "Previous case recorded";
@@ -508,6 +519,13 @@
     if (missingCase !== -1) {
       showToast(`Complete Case ${missingCase + 1} before submitting`);
       showWritten(missingCase);
+      return;
+    }
+    const missingVideo = Array.from({length: 6}, (_, index) => index).find(index => !state.recorded[index]);
+    if (missingVideo !== undefined) {
+      showToast(`Record Hirevire Question ${missingVideo + 1} before submitting`);
+      if (missingVideo < 5) showVideo(missingVideo);
+      else showFinalVideo();
       return;
     }
     const form = document.getElementById("writtenSubmitForm");

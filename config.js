@@ -33,5 +33,5 @@ window.ASSESSMENT_CONFIG = {
     browserInformation: "613202472",
     clientTimestamp: "1646254060"
   },
-  version: "2026-09-21-video-recovery-v3"
+  version: "2026-09-21-case-navigation-v6"
 };
