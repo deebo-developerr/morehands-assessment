@@ -102,6 +102,8 @@
   let providerLoadTimer = null;
   let submissionPending = false;
   let submissionTimer = null;
+  let localDraftAvailable = true;
+  let caseSavePending = false;
 
   if (!activeCid || !candidateEmail) {
     gate.hidden = false;
@@ -110,7 +112,9 @@
   try {
     const saved = JSON.parse(localStorage.getItem(stateKey) || "null");
     if (saved && typeof saved === "object") state = {...state, ...saved, answers: saved.answers || {}, writtenComplete: saved.writtenComplete || {}, serverSaved: saved.serverSaved || {}, recorded: saved.recorded || {}};
-  } catch (_) {}
+  } catch (_) {
+    localDraftAvailable = false;
+  }
   current = Number.isInteger(state.currentCase) && state.currentCase >= 0 && state.currentCase < cases.length ? state.currentCase : 0;
 
   app.hidden = false;
@@ -142,7 +146,7 @@
     button.dataset.number = String(item.number);
     button.textContent = `Case ${item.number}`;
     button.addEventListener("click", () => {
-      if (state.submitted) return;
+      if (state.submitted || caseSavePending) return;
       showWritten(index);
     });
     nav.appendChild(button);
@@ -150,7 +154,14 @@
 
   function saveState() {
     state.currentCase = current;
-    localStorage.setItem(stateKey, JSON.stringify(state));
+    try {
+      localStorage.setItem(stateKey, JSON.stringify(state));
+      localDraftAvailable = true;
+      return true;
+    } catch (_) {
+      localDraftAvailable = false;
+      return false;
+    }
   }
 
   function furthestWrittenCase() {
@@ -175,7 +186,7 @@
       button.classList.toggle("visited", Boolean(state.writtenComplete[index]));
       button.classList.toggle("recorded", Boolean(state.recorded[index]));
       button.classList.toggle("pending", Boolean(state.writtenComplete[index]) && !state.recorded[index]);
-      button.disabled = Boolean(state.submitted);
+      button.disabled = Boolean(state.submitted || caseSavePending);
       if (index === current) button.setAttribute("aria-current", "step");
       else button.removeAttribute("aria-current");
       const status = state.recorded[index]
@@ -234,8 +245,10 @@
     control.addEventListener("input", () => {
       state.answers[field.key] = control.value;
       delete state.serverSaved[current];
-      saveState();
-      document.getElementById("draftState").textContent = "Draft saved in this browser. Save the case to request a fresh online recovery backup.";
+      const savedLocally = saveState();
+      document.getElementById("draftState").textContent = savedLocally
+        ? "Draft saved in this browser. Save the case to request a fresh online recovery backup."
+        : "Browser draft storage is unavailable. Complete and save this case to send an online recovery copy.";
     });
     wrapper.append(labelText, control);
     return wrapper;
@@ -280,8 +293,12 @@
     const fields = document.getElementById("writtenFields");
     fields.replaceChildren(...item.fields.map(makeField));
     document.getElementById("draftState").textContent = state.serverSaved[index]
-      ? "Saved in this browser; an online recovery backup was requested when you last continued."
-      : "Drafts are saved in this browser. Continuing also requests an online recovery backup.";
+      ? (localDraftAvailable
+        ? "Saved in this browser; an online recovery backup was requested when you last continued."
+        : "An online recovery backup was requested when you last continued; browser draft storage is unavailable.")
+      : (localDraftAvailable
+        ? "Drafts are saved in this browser. Continuing also requests an online recovery backup."
+        : "Browser draft storage is unavailable. Completing this case will still request an online recovery backup.");
 
     tabs.replaceChildren();
     item.evidence.forEach((ev, i) => {
@@ -365,32 +382,39 @@
     });
   }
 
-  function submitRecoveryEvent({eventType, stage, answerSnapshot = "", issueCategory = "", issueDetails = ""}) {
+  async function submitRecoveryEvent({eventType, stage, answerSnapshot = "", issueCategory = "", issueDetails = ""}) {
     if (!config.recoveryFormResponseUrl || !config.recoveryEntries) {
       throw new Error("Online backup channel is unavailable");
     }
-    const form = document.createElement("form");
-    form.method = "post";
-    form.target = "recoverySubmitTarget";
-    form.hidden = true;
     const entries = config.recoveryEntries;
-    form.action = config.recoveryFormResponseUrl;
-    addHidden(form, `entry.${entries.eventType}`, eventType);
-    addHidden(form, `entry.${entries.candidateId}`, activeCid);
-    addHidden(form, `entry.${entries.applicationEmail}`, candidateEmail);
-    addHidden(form, `entry.${entries.fullName}`, state.answers.fullName || "");
-    addHidden(form, `entry.${entries.stage}`, stage);
-    addHidden(form, `entry.${entries.answerSnapshot}`, answerSnapshot);
-    addHidden(form, `entry.${entries.issueCategory}`, issueCategory);
-    addHidden(form, `entry.${entries.issueDetails}`, issueDetails);
-    addHidden(form, `entry.${entries.browserInformation}`, browserInformation());
-    addHidden(form, `entry.${entries.clientTimestamp}`, new Date().toISOString());
-    addHidden(form, "fvv", "1");
-    addHidden(form, "draftResponse", "[]");
-    addHidden(form, "pageHistory", "0");
-    document.body.appendChild(form);
-    form.submit();
-    setTimeout(() => form.remove(), 30000);
+    const payload = new URLSearchParams();
+    payload.set(`entry.${entries.eventType}`, eventType);
+    payload.set(`entry.${entries.candidateId}`, activeCid);
+    payload.set(`entry.${entries.applicationEmail}`, candidateEmail);
+    payload.set(`entry.${entries.fullName}`, state.answers.fullName || "");
+    payload.set(`entry.${entries.stage}`, stage);
+    payload.set(`entry.${entries.answerSnapshot}`, answerSnapshot);
+    payload.set(`entry.${entries.issueCategory}`, issueCategory);
+    payload.set(`entry.${entries.issueDetails}`, issueDetails);
+    payload.set(`entry.${entries.browserInformation}`, browserInformation());
+    payload.set(`entry.${entries.clientTimestamp}`, new Date().toISOString());
+    payload.set("fvv", "1");
+    payload.set("draftResponse", "[]");
+    payload.set("pageHistory", "0");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      await fetch(config.recoveryFormResponseUrl, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+        body: payload.toString(),
+        signal: controller.signal,
+        keepalive: true
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   function showVideo(caseIndex) {
@@ -440,39 +464,68 @@
     videoStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
 
-  document.getElementById("writtenCaseForm").addEventListener("submit", event => {
+  document.getElementById("writtenCaseForm").addEventListener("submit", async event => {
     event.preventDefault();
+    if (caseSavePending) return;
     const form = event.currentTarget;
     if (!form.reportValidity()) return;
-    for (const field of cases[current].fields) state.answers[field.key] = String(form.elements[field.key].value || "").trim();
-    state.writtenComplete[current] = true;
+    const submittedCase = current;
+    for (const field of cases[submittedCase].fields) state.answers[field.key] = String(form.elements[field.key].value || "").trim();
+    state.writtenComplete[submittedCase] = true;
+    const submittedControls = cases[submittedCase].fields.map(field => form.elements[field.key]);
     const draftState = document.getElementById("draftState");
+    const saveButton = document.getElementById("saveAndRecord");
+    caseSavePending = true;
+    submittedControls.forEach(control => { control.disabled = true; });
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving completed case…";
+    updateProgress(`Case ${cases[submittedCase].number} of 5 · saving completed case`);
+    const savedLocally = saveState();
+    let cloudRequested = false;
     try {
-      submitRecoveryEvent({
+      await submitRecoveryEvent({
         eventType: "case_saved",
-        stage: `case-${current + 1}`,
+        stage: `case-${submittedCase + 1}`,
         answerSnapshot: JSON.stringify(state.answers)
       });
-      state.serverSaved[current] = `requested:${new Date().toISOString()}`;
-      draftState.textContent = "Saved in this browser. An online recovery backup was requested.";
+      cloudRequested = true;
+      state.serverSaved[submittedCase] = `requested:${new Date().toISOString()}`;
+      draftState.textContent = localDraftAvailable
+        ? "Saved in this browser. An online recovery backup was requested."
+        : "Browser draft storage is unavailable. An online recovery backup was requested for this completed case.";
     } catch (error) {
-      delete state.serverSaved[current];
-      draftState.textContent = "Saved in this browser. The online backup could not be requested, but you can continue to Hirevire.";
+      delete state.serverSaved[submittedCase];
+      draftState.textContent = localDraftAvailable
+        ? "Saved in this browser. The online backup could not be requested, but you can continue to Hirevire."
+        : "Browser draft storage and the online backup are unavailable. Copy your answers before continuing.";
     }
-    saveState();
-    if (state.recorded[current] && current === 4) showFinalVideo();
-    else if (state.recorded[current] && current < 4) showWritten(current + 1);
-    else showVideo(current);
+    const stateSavedAfterRequest = saveState();
+    if (!stateSavedAfterRequest && state.serverSaved[submittedCase]) {
+      draftState.textContent = "Browser draft storage is unavailable. An online recovery backup was requested for this completed case.";
+    }
+    if (!savedLocally && !cloudRequested) {
+      state.writtenComplete[submittedCase] = false;
+      caseSavePending = false;
+      submittedControls.forEach(control => { control.disabled = false; });
+      saveButton.disabled = false;
+      saveButton.textContent = `Retry saving Case ${cases[submittedCase].number}`;
+      updateProgress(`Case ${cases[submittedCase].number} of 5 · save required`);
+      return;
+    }
+    caseSavePending = false;
+    if (state.recorded[submittedCase] && submittedCase === 4) showFinalVideo();
+    else if (state.recorded[submittedCase] && submittedCase < 4) showWritten(submittedCase + 1);
+    else showVideo(submittedCase);
   });
 
-  sendRecordingIssue.addEventListener("click", () => {
+  sendRecordingIssue.addEventListener("click", async () => {
     const category = document.getElementById("recordingIssueCategory").value;
     const details = document.getElementById("recordingIssueDetails").value.trim();
     const status = document.getElementById("recordingIssueStatus");
     sendRecordingIssue.disabled = true;
     status.textContent = "Submitting technical report…";
     try {
-      submitRecoveryEvent({
+      await submitRecoveryEvent({
         eventType: "recording_issue",
         stage: state.phase === "final-video" ? "question-6" : `question-${current + 1}`,
         issueCategory: category,
