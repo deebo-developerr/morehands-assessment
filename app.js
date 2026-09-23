@@ -155,6 +155,7 @@
   const allVideosConfirmed = document.getElementById("allVideosConfirmed");
   const finalSubmitButton = document.getElementById("finalSubmitButton");
   const sendRecordingIssue = document.getElementById("sendRecordingIssue");
+  const caseButtons = [];
 
   cases.forEach((item, index) => {
     const button = document.createElement("button");
@@ -166,8 +167,21 @@
       if (caseSavePending) return;
       showWritten(index);
     });
+    caseButtons.push(button);
     nav.appendChild(button);
   });
+
+  const summaryButton = document.createElement("button");
+  summaryButton.type = "button";
+  summaryButton.className = "case-tab summary-tab";
+  summaryButton.dataset.number = "Summary";
+  summaryButton.textContent = "Final Summary";
+  summaryButton.addEventListener("click", () => {
+    if (caseSavePending) return;
+    if (submissionLocked()) showCompletion();
+    else showFinalReview();
+  });
+  nav.appendChild(summaryButton);
 
   function saveState() {
     state.currentCase = current;
@@ -206,6 +220,19 @@
     return Math.min(11, written + videos);
   }
 
+  function writtenCaseComplete(index) {
+    const item = cases[index];
+    return Boolean(state.writtenComplete[index]) && item.fields.every(field => String(state.answers[field.key] || "").trim());
+  }
+
+  function writtenCompletionCount() {
+    return cases.filter((_, index) => writtenCaseComplete(index)).length;
+  }
+
+  function videoCompletionCount() {
+    return Array.from({length: 6}, (_, index) => Boolean(state.recorded[index])).filter(Boolean).length;
+  }
+
   function submissionLocked() {
     return Boolean(state.submitted || state.submissionRequested);
   }
@@ -213,12 +240,13 @@
   function updateProgress(label) {
     document.getElementById("progressText").textContent = label;
     document.getElementById("progressBar").style.width = `${Math.max(4, (completedSteps() / 11) * 100)}%`;
-    [...nav.children].forEach((button, index) => {
+    const summaryActive = state.phase === "final-review" || state.phase === "submission-requested" || state.phase === "complete";
+    caseButtons.forEach((button, index) => {
       button.classList.toggle("visited", Boolean(state.writtenComplete[index]));
       button.classList.toggle("recorded", Boolean(state.recorded[index]));
       button.classList.toggle("pending", Boolean(state.writtenComplete[index]) && !state.recorded[index]);
       button.disabled = Boolean(caseSavePending);
-      if (index === current) button.setAttribute("aria-current", "step");
+      if (!summaryActive && index === current) button.setAttribute("aria-current", "step");
       else button.removeAttribute("aria-current");
       const status = state.recorded[index]
         ? "written answer and video recorded"
@@ -226,6 +254,15 @@
       button.setAttribute("aria-label", `Open Case ${index + 1} written section — ${status}`);
       button.title = `Open Case ${index + 1}: ${status}`;
     });
+    const writtenCount = writtenCompletionCount();
+    const videoCount = videoCompletionCount();
+    summaryButton.disabled = Boolean(caseSavePending);
+    summaryButton.classList.toggle("recorded", writtenCount === 5 && videoCount === 6);
+    summaryButton.classList.toggle("pending", writtenCount > 0 || videoCount > 0);
+    if (summaryActive) summaryButton.setAttribute("aria-current", "step");
+    else summaryButton.removeAttribute("aria-current");
+    summaryButton.setAttribute("aria-label", `Open Final Summary — ${writtenCount} of 5 written cases and ${videoCount} of 6 videos confirmed`);
+    summaryButton.title = `Final Summary: written ${writtenCount}/5 · videos ${videoCount}/6`;
   }
 
   function renderEvidence(index) {
@@ -511,11 +548,103 @@
   }
 
   function updateFinalSubmitState() {
-    const ready = allWrittenConfirmed.checked && allVideosConfirmed.checked;
+    const writtenCount = writtenCompletionCount();
+    const videoCount = videoCompletionCount();
+    const writtenReady = writtenCount === 5;
+    const videosReady = videoCount === 6;
+    allWrittenConfirmed.disabled = !writtenReady;
+    allVideosConfirmed.disabled = !videosReady;
+    if (!writtenReady) allWrittenConfirmed.checked = false;
+    if (!videosReady) allVideosConfirmed.checked = false;
+    const ready = writtenReady && videosReady && allWrittenConfirmed.checked && allVideosConfirmed.checked;
     finalSubmitButton.disabled = !ready;
-    document.getElementById("finalReviewHint").textContent = ready
-      ? "Both confirmations are checked. Submit only when you are satisfied with all five written cases and all six videos."
-      : "Tick both confirmations only after checking the written cases and all six videos.";
+    let hint = "";
+    if (!writtenReady || !videosReady) {
+      hint = `Still required: ${5 - writtenCount} written case${5 - writtenCount === 1 ? "" : "s"} and ${6 - videoCount} video${6 - videoCount === 1 ? "" : "s"}. Complete every missing item above.`;
+    } else if (!allWrittenConfirmed.checked || !allVideosConfirmed.checked) {
+      hint = "Everything shows complete. Check Yes for both confirmations to unlock final submission.";
+    } else {
+      hint = "Verification complete. You can now submit the assessment.";
+    }
+    document.getElementById("finalReviewHint").textContent = hint;
+  }
+
+  function appendSummaryStatus(container, label, complete) {
+    const status = document.createElement("span");
+    status.className = `summary-status ${complete ? "complete" : "missing"}`;
+    status.textContent = `${complete ? "✓" : "!"} ${label}: ${complete ? "Complete" : "Missing"}`;
+    container.appendChild(status);
+  }
+
+  function renderFinalReviewChecklist() {
+    const writtenCount = writtenCompletionCount();
+    const videoCount = videoCompletionCount();
+    const totals = document.getElementById("finalReviewStatus");
+    totals.replaceChildren();
+    [["Written answers", writtenCount, 5], ["Video recordings", videoCount, 6]].forEach(([label, count, total]) => {
+      const card = document.createElement("div");
+      card.className = `summary-total ${count === total ? "complete" : "missing"}`;
+      const strong = document.createElement("strong");
+      const span = document.createElement("span");
+      strong.textContent = `${count}/${total}`;
+      span.textContent = label;
+      card.append(strong, span);
+      totals.appendChild(card);
+    });
+
+    const checklist = document.getElementById("finalReviewChecklist");
+    checklist.replaceChildren();
+    cases.forEach((item, index) => {
+      const writtenDone = writtenCaseComplete(index);
+      const videoDone = Boolean(state.recorded[index]);
+      const row = document.createElement("section");
+      row.className = "summary-row";
+      const heading = document.createElement("div");
+      const title = document.createElement("strong");
+      const subtitle = document.createElement("span");
+      title.textContent = `Case ${index + 1}`;
+      subtitle.textContent = item.title;
+      heading.append(title, subtitle);
+      const statuses = document.createElement("div");
+      statuses.className = "summary-row-statuses";
+      appendSummaryStatus(statuses, "Written", writtenDone);
+      appendSummaryStatus(statuses, `Video ${index + 1}`, videoDone);
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "secondary summary-action";
+      if (!writtenDone) {
+        action.textContent = `Complete Case ${index + 1}`;
+        action.addEventListener("click", () => showWritten(index));
+      } else if (!videoDone) {
+        action.textContent = `Record Video ${index + 1}`;
+        action.addEventListener("click", () => showVideo(index));
+      } else {
+        action.textContent = `Review Case ${index + 1}`;
+        action.addEventListener("click", () => showWritten(index));
+      }
+      row.append(heading, statuses, action);
+      checklist.appendChild(row);
+    });
+
+    const finalVideoDone = Boolean(state.recorded[5]);
+    const finalRow = document.createElement("section");
+    finalRow.className = "summary-row final-video-summary";
+    const finalHeading = document.createElement("div");
+    const finalTitle = document.createElement("strong");
+    const finalSubtitle = document.createElement("span");
+    finalTitle.textContent = "Final fit video";
+    finalSubtitle.textContent = "Hirevire Question 6 of 6";
+    finalHeading.append(finalTitle, finalSubtitle);
+    const finalStatuses = document.createElement("div");
+    finalStatuses.className = "summary-row-statuses";
+    appendSummaryStatus(finalStatuses, "Video 6", finalVideoDone);
+    const finalAction = document.createElement("button");
+    finalAction.type = "button";
+    finalAction.className = "secondary summary-action";
+    finalAction.textContent = finalVideoDone ? "Review Question 6" : "Record Question 6";
+    finalAction.addEventListener("click", showFinalVideo);
+    finalRow.append(finalHeading, finalStatuses, finalAction);
+    checklist.appendChild(finalRow);
   }
 
   function showFinalReview() {
@@ -529,21 +658,9 @@
     completionStage.hidden = true;
     allWrittenConfirmed.checked = false;
     allVideosConfirmed.checked = false;
+    renderFinalReviewChecklist();
     updateFinalSubmitState();
-    const writtenCount = cases.filter((item, index) => state.writtenComplete[index] && item.fields.every(field => String(state.answers[field.key] || "").trim())).length;
-    const videoCount = Array.from({length: 6}, (_, index) => Boolean(state.recorded[index])).filter(Boolean).length;
-    const status = document.getElementById("finalReviewStatus");
-    status.replaceChildren();
-    [
-      `${writtenCount === 5 ? "✓" : "!"} Written cases completed on this page: ${writtenCount}/5`,
-      `${videoCount === 6 ? "✓" : "!"} Video recordings confirmed on this page: ${videoCount}/6`,
-      "Open Hirevire below if you need to review, retake or finish Question 6 before submitting."
-    ].forEach(message => {
-      const row = document.createElement("span");
-      row.textContent = message;
-      status.appendChild(row);
-    });
-    updateProgress("Final review · confirm 5 written cases and 6 videos");
+    updateProgress(`Final Summary · written ${writtenCompletionCount()}/5 · videos ${videoCompletionCount()}/6`);
     finalReviewStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
 
