@@ -94,7 +94,7 @@
   const app = document.getElementById("assessmentApp");
   const gate = document.getElementById("accessGate");
   const stateKey = `ticket-assessment:${activeCid}:guided-v1`;
-  let state = {answers: {}, writtenComplete: {}, serverSaved: {}, recorded: {}, currentCase: 0, phase: "written", submitted: false};
+  let state = {answers: {}, writtenComplete: {}, serverSaved: {}, recorded: {}, currentCase: 0, phase: "written", submitted: false, submissionRequested: false};
   let current = 0;
   let currentEvidence = 0;
   let providerStarted = false;
@@ -103,18 +103,29 @@
   let submissionPending = false;
   let submissionTimer = null;
   let localDraftAvailable = true;
+  let sessionDraftAvailable = true;
   let caseSavePending = false;
 
   if (!activeCid || !candidateEmail) {
     gate.hidden = false;
     return;
   }
+  let localSaved = null;
+  let sessionSaved = null;
   try {
-    const saved = JSON.parse(localStorage.getItem(stateKey) || "null");
-    if (saved && typeof saved === "object") state = {...state, ...saved, answers: saved.answers || {}, writtenComplete: saved.writtenComplete || {}, serverSaved: saved.serverSaved || {}, recorded: saved.recorded || {}};
+    localSaved = JSON.parse(localStorage.getItem(stateKey) || "null");
   } catch (_) {
     localDraftAvailable = false;
   }
+  try {
+    sessionSaved = JSON.parse(sessionStorage.getItem(stateKey) || "null");
+  } catch (_) {
+    sessionDraftAvailable = false;
+  }
+  const saved = [localSaved, sessionSaved]
+    .filter(candidate => candidate && typeof candidate === "object")
+    .sort((a, b) => (Number(b.revision || 0) - Number(a.revision || 0)) || (Number(b.savedAt || 0) - Number(a.savedAt || 0)))[0] || null;
+  if (saved) state = {...state, ...saved, answers: saved.answers || {}, writtenComplete: saved.writtenComplete || {}, serverSaved: saved.serverSaved || {}, recorded: saved.recorded || {}};
   current = Number.isInteger(state.currentCase) && state.currentCase >= 0 && state.currentCase < cases.length ? state.currentCase : 0;
 
   app.hidden = false;
@@ -131,12 +142,18 @@
   const viewer = document.getElementById("viewer");
   const writtenStage = document.getElementById("writtenStage");
   const videoStage = document.getElementById("inlineVideoSection");
+  const finalReviewStage = document.getElementById("finalReviewSection");
   const completionStage = document.getElementById("completionSection");
   const providerFrame = document.getElementById("videoProviderFrame");
   const providerStatus = document.getElementById("inlineProviderStatus");
   const recordingConfirmed = document.getElementById("recordingConfirmed");
   const videoReturnButton = document.getElementById("videoReturnButton");
   const openRecorderDirect = document.getElementById("openRecorderDirect");
+  const finalReviewVideoLink = document.getElementById("finalReviewVideoLink");
+  const completionVideoLink = document.getElementById("completionVideoLink");
+  const allWrittenConfirmed = document.getElementById("allWrittenConfirmed");
+  const allVideosConfirmed = document.getElementById("allVideosConfirmed");
+  const finalSubmitButton = document.getElementById("finalSubmitButton");
   const sendRecordingIssue = document.getElementById("sendRecordingIssue");
 
   cases.forEach((item, index) => {
@@ -146,7 +163,7 @@
     button.dataset.number = String(item.number);
     button.textContent = `Case ${item.number}`;
     button.addEventListener("click", () => {
-      if (state.submitted || caseSavePending) return;
+      if (caseSavePending) return;
       showWritten(index);
     });
     nav.appendChild(button);
@@ -154,14 +171,24 @@
 
   function saveState() {
     state.currentCase = current;
+    state.revision = Number(state.revision || 0) + 1;
+    state.savedAt = Date.now();
+    let saved = false;
     try {
       localStorage.setItem(stateKey, JSON.stringify(state));
       localDraftAvailable = true;
-      return true;
+      saved = true;
     } catch (_) {
       localDraftAvailable = false;
-      return false;
     }
+    try {
+      sessionStorage.setItem(stateKey, JSON.stringify(state));
+      sessionDraftAvailable = true;
+      saved = true;
+    } catch (_) {
+      sessionDraftAvailable = false;
+    }
+    return saved;
   }
 
   function furthestWrittenCase() {
@@ -179,6 +206,10 @@
     return Math.min(11, written + videos);
   }
 
+  function submissionLocked() {
+    return Boolean(state.submitted || state.submissionRequested);
+  }
+
   function updateProgress(label) {
     document.getElementById("progressText").textContent = label;
     document.getElementById("progressBar").style.width = `${Math.max(4, (completedSteps() / 11) * 100)}%`;
@@ -186,7 +217,7 @@
       button.classList.toggle("visited", Boolean(state.writtenComplete[index]));
       button.classList.toggle("recorded", Boolean(state.recorded[index]));
       button.classList.toggle("pending", Boolean(state.writtenComplete[index]) && !state.recorded[index]);
-      button.disabled = Boolean(state.submitted || caseSavePending);
+      button.disabled = Boolean(caseSavePending);
       if (index === current) button.setAttribute("aria-current", "step");
       else button.removeAttribute("aria-current");
       const status = state.recorded[index]
@@ -260,6 +291,7 @@
     saveState();
     writtenStage.hidden = false;
     videoStage.hidden = true;
+    finalReviewStage.hidden = true;
     completionStage.hidden = true;
     currentEvidence = 0;
     const item = cases[index];
@@ -269,12 +301,19 @@
     document.getElementById("taskTitle").textContent = item.taskTitle;
     document.getElementById("taskPrompt").textContent = item.prompt;
     const saveButton = document.getElementById("saveAndRecord");
-    saveButton.disabled = false;
-    saveButton.textContent = `Save answers and record Case ${item.number} explanation`;
-    document.getElementById("caseControlHint").textContent = "Use the case tabs above to review or complete written cases in any order. You may record videos later, but all six are required before final submission.";
+    saveButton.hidden = submissionLocked();
+    saveButton.disabled = submissionLocked();
+    saveButton.textContent = state.reviewReady
+      ? `Save Case ${item.number} and return to final checklist`
+      : `Save answers and record Case ${item.number} explanation`;
+    document.getElementById("caseControlHint").textContent = submissionLocked()
+      ? "Use every case tab to review the answers included in your submission request. This review is read-only."
+      : "Use the case tabs above to review or complete written cases in any order. Nothing locks before the final checklist, and you can return to any case or video before submitting.";
     const previous = document.getElementById("previousCase");
-    previous.disabled = true;
-    previous.textContent = index === 0 ? "Start with Case 1" : "Previous case recorded";
+    previous.disabled = false;
+    previous.textContent = submissionLocked()
+      ? "Return to submission summary"
+      : (state.reviewReady ? "Return to final checklist" : (index === 0 ? "Stay on Case 1" : `Open Case ${index}`));
 
     const inventory = document.getElementById("inventory");
     inventory.replaceChildren();
@@ -292,6 +331,9 @@
 
     const fields = document.getElementById("writtenFields");
     fields.replaceChildren(...item.fields.map(makeField));
+    if (submissionLocked()) {
+      fields.querySelectorAll("input, textarea, select").forEach(control => { control.disabled = true; });
+    }
     document.getElementById("draftState").textContent = state.serverSaved[index]
       ? (localDraftAvailable
         ? "Saved in this browser; an online recovery backup was requested when you last continued."
@@ -339,6 +381,8 @@
     }
     const url = providerUrl();
     openRecorderDirect.href = url;
+    finalReviewVideoLink.href = url;
+    completionVideoLink.href = url;
     if (providerStarted) return;
     providerStarted = true;
     providerLoaded = false;
@@ -424,6 +468,7 @@
     ensureProviderLoaded();
     writtenStage.hidden = true;
     videoStage.hidden = false;
+    finalReviewStage.hidden = true;
     completionStage.hidden = true;
     recordingConfirmed.checked = false;
     videoReturnButton.disabled = true;
@@ -449,6 +494,7 @@
     ensureProviderLoaded();
     writtenStage.hidden = true;
     videoStage.hidden = false;
+    finalReviewStage.hidden = true;
     completionStage.hidden = true;
     recordingConfirmed.checked = false;
     videoReturnButton.disabled = true;
@@ -458,11 +504,71 @@
     document.getElementById("videoInstructions").textContent = finalVideoPrompt;
     document.getElementById("videoReturnInstructionText").textContent = "Record only Hirevire Question 6. You may use Retake before submission if it is offered. This is the final video: submit the complete Hirevire application, then return below and press the blue assessment button.";
     document.getElementById("recordingConfirmText").textContent = "I have recorded Question 6 and submitted the complete Hirevire application.";
-    videoReturnButton.textContent = "Submit my written answers and finish";
-    document.getElementById("videoReturnHint").textContent = "Only continue after Hirevire confirms that all six recordings were submitted.";
+    videoReturnButton.textContent = "I submitted Hirevire — review the final checklist";
+    document.getElementById("videoReturnHint").textContent = "Only continue after Hirevire confirms that all six recordings were submitted. You will review a checklist before final written submission.";
     updateProgress("Final fit question · video and submission");
     videoStage.scrollIntoView({behavior: "smooth", block: "start"});
   }
+
+  function updateFinalSubmitState() {
+    const ready = allWrittenConfirmed.checked && allVideosConfirmed.checked;
+    finalSubmitButton.disabled = !ready;
+    document.getElementById("finalReviewHint").textContent = ready
+      ? "Both confirmations are checked. Submit only when you are satisfied with all five written cases and all six videos."
+      : "Tick both confirmations only after checking the written cases and all six videos.";
+  }
+
+  function showFinalReview() {
+    state.reviewReady = true;
+    state.phase = "final-review";
+    saveState();
+    ensureProviderLoaded();
+    writtenStage.hidden = true;
+    videoStage.hidden = true;
+    finalReviewStage.hidden = false;
+    completionStage.hidden = true;
+    allWrittenConfirmed.checked = false;
+    allVideosConfirmed.checked = false;
+    updateFinalSubmitState();
+    const writtenCount = cases.filter((item, index) => state.writtenComplete[index] && item.fields.every(field => String(state.answers[field.key] || "").trim())).length;
+    const videoCount = Array.from({length: 6}, (_, index) => Boolean(state.recorded[index])).filter(Boolean).length;
+    const status = document.getElementById("finalReviewStatus");
+    status.replaceChildren();
+    [
+      `${writtenCount === 5 ? "✓" : "!"} Written cases completed on this page: ${writtenCount}/5`,
+      `${videoCount === 6 ? "✓" : "!"} Video recordings confirmed on this page: ${videoCount}/6`,
+      "Open Hirevire below if you need to review, retake or finish Question 6 before submitting."
+    ].forEach(message => {
+      const row = document.createElement("span");
+      row.textContent = message;
+      status.appendChild(row);
+    });
+    updateProgress("Final review · confirm 5 written cases and 6 videos");
+    finalReviewStage.scrollIntoView({behavior: "smooth", block: "start"});
+  }
+
+  function showCompletion() {
+    state.phase = state.submitted ? "complete" : "submission-requested";
+    saveState();
+    ensureProviderLoaded();
+    writtenStage.hidden = true;
+    videoStage.hidden = true;
+    finalReviewStage.hidden = true;
+    completionStage.hidden = false;
+    updateProgress(state.submitted ? "Written assessment submitted" : "Written submission request sent");
+    document.getElementById("progressBar").style.width = "100%";
+    completionStage.scrollIntoView({behavior: "smooth", block: "start"});
+  }
+
+  document.getElementById("previousCase").addEventListener("click", () => {
+    if (submissionLocked()) showCompletion();
+    else if (state.reviewReady) showFinalReview();
+    else if (current > 0) showWritten(current - 1);
+  });
+  allWrittenConfirmed.addEventListener("change", updateFinalSubmitState);
+  allVideosConfirmed.addEventListener("change", updateFinalSubmitState);
+  finalSubmitButton.addEventListener("click", submitWrittenAnswers);
+  document.getElementById("reviewSubmittedCases").addEventListener("click", () => showWritten(0));
 
   document.getElementById("writtenCaseForm").addEventListener("submit", async event => {
     event.preventDefault();
@@ -513,7 +619,8 @@
       return;
     }
     caseSavePending = false;
-    if (state.recorded[submittedCase] && submittedCase === 4) showFinalVideo();
+    if (state.reviewReady) showFinalReview();
+    else if (state.recorded[submittedCase] && submittedCase === 4) showFinalVideo();
     else if (state.recorded[submittedCase] && submittedCase < 4) showWritten(submittedCase + 1);
     else showVideo(submittedCase);
   });
@@ -549,13 +656,15 @@
     if (!recordingConfirmed.checked) return;
     if (state.phase === "final-video") {
       state.recorded[5] = true;
+      state.reviewReady = true;
       saveState();
-      submitWrittenAnswers();
+      showFinalReview();
       return;
     }
     state.recorded[current] = true;
     saveState();
-    if (current < 4) showWritten(current + 1);
+    if (state.reviewReady) showFinalReview();
+    else if (current < 4) showWritten(current + 1);
     else showFinalVideo();
   });
 
@@ -568,6 +677,11 @@
   }
 
   function submitWrittenAnswers() {
+    if (!allWrittenConfirmed.checked || !allVideosConfirmed.checked) {
+      showToast("Confirm all five written cases and all six videos before submitting");
+      showFinalReview();
+      return;
+    }
     const missingCase = cases.findIndex((item, index) => !state.writtenComplete[index] || item.fields.some(field => !String(state.answers[field.key] || "").trim()));
     if (missingCase !== -1) {
       showToast(`Complete Case ${missingCase + 1} before submitting`);
@@ -594,16 +708,28 @@
     addHidden(form, "fvv", "1");
     addHidden(form, "draftResponse", "[]");
     addHidden(form, "pageHistory", "0,1,2,3,4,5,6");
+    state.submissionRequested = true;
+    state.phase = "submission-requested";
+    if (!saveState()) {
+      state.submissionRequested = false;
+      state.phase = "final-review";
+      finalSubmitButton.disabled = false;
+      showToast("This browser cannot preserve submission state. Keep this page open and contact the hiring team.");
+      return;
+    }
     submissionPending = true;
-    videoReturnButton.disabled = true;
-    videoReturnButton.textContent = "Submitting written answers…";
+    finalSubmitButton.disabled = true;
+    finalSubmitButton.textContent = "Submitting written answers…";
     form.submit();
     clearTimeout(submissionTimer);
     submissionTimer = setTimeout(() => {
       if (!submissionPending) return;
       submissionPending = false;
-      videoReturnButton.disabled = false;
-      videoReturnButton.textContent = "Retry written-answer submission";
+      state.submissionRequested = false;
+      state.phase = "final-review";
+      saveState();
+      finalSubmitButton.disabled = false;
+      finalSubmitButton.textContent = "Retry written-answer submission";
       showToast("Written submission did not confirm. Please retry.");
     }, 20000);
   }
@@ -612,15 +738,10 @@
     if (!submissionPending) return;
     submissionPending = false;
     clearTimeout(submissionTimer);
-    state.submitted = true;
-    state.phase = "complete";
+    state.submissionRequested = true;
+    state.phase = "submission-requested";
     saveState();
-    writtenStage.hidden = true;
-    videoStage.hidden = true;
-    completionStage.hidden = false;
-    updateProgress("Written assessment submitted");
-    document.getElementById("progressBar").style.width = "100%";
-    completionStage.scrollIntoView({behavior: "smooth", block: "start"});
+    showCompletion();
   });
 
   function setZoom(mode) {
@@ -644,16 +765,16 @@
     setTimeout(() => toast.classList.remove("show"), 2200);
   }
 
-  if (state.submitted) {
-    writtenStage.hidden = true;
-    videoStage.hidden = true;
-    completionStage.hidden = false;
-    updateProgress("Written assessment submitted");
-    document.getElementById("progressBar").style.width = "100%";
+  if (submissionLocked()) {
+    showCompletion();
   } else if (state.phase === "final-video") {
     showFinalVideo();
   } else if (state.phase === "video" && state.writtenComplete[current] && !state.recorded[current]) {
     showVideo(current);
+  } else if (state.phase === "written") {
+    showWritten(current);
+  } else if (state.phase === "final-review" || state.reviewReady) {
+    showFinalReview();
   } else {
     showWritten(current);
   }

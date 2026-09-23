@@ -33,5 +33,5 @@ window.ASSESSMENT_CONFIG = {
     browserInformation: "613202472",
     clientTimestamp: "1646254060"
   },
-  version: "2026-09-22-cloud-case-backup-v7"
+  version: "2026-09-23-final-review-v8"
 };

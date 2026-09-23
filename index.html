@@ -160,15 +160,36 @@
         </div>
       </section>
 
+      <section class="completion card" id="finalReviewSection" hidden>
+        <p class="eyebrow">Final review before submission</p>
+        <h2>Confirm every written answer and all six videos.</h2>
+        <p>Nothing is locked. Use the case tabs above to review or change any written answer, then return to this checklist.</p>
+        <div class="completion-checks" id="finalReviewStatus" aria-live="polite"></div>
+        <div class="final-confirmations">
+          <label class="recording-confirm"><input id="allWrittenConfirmed" type="checkbox"> I have reviewed all five cases and completed every written question.</label>
+          <label class="recording-confirm"><input id="allVideosConfirmed" type="checkbox"> I have recorded all six Hirevire videos and submitted the complete Hirevire application.</label>
+        </div>
+        <div class="final-review-actions">
+          <a class="secondary button-link" id="finalReviewVideoLink" target="_blank" rel="noopener noreferrer">Open Hirevire to review or finish my videos</a>
+          <button class="primary" id="finalSubmitButton" type="button" disabled>Submit my written answers and finish</button>
+        </div>
+        <p class="draft-state" id="finalReviewHint">Tick both confirmations only after checking the written cases and all six videos.</p>
+      </section>
+
       <section class="completion card" id="completionSection" hidden>
-        <p class="eyebrow">Written assessment submitted</p>
-        <h2>Your written answers have been submitted.</h2>
-        <p>The hiring team will separately verify your Hirevire application, recordings and transcripts before marking the full assessment complete.</p>
+        <p class="eyebrow">Submission request sent</p>
+        <h2>Your written answers were sent for verification.</h2>
+        <p>This browser cannot independently confirm Google Forms receipt. The hiring team will verify the written response plus all six Hirevire recordings and transcripts before marking the full assessment complete.</p>
         <div class="completion-checks">
-          <span>✓ Written answers submitted</span>
-          <span>✓ Candidate confirmed Hirevire submission</span>
+          <span>✓ Written submission request sent</span>
+          <span>✓ Candidate confirmed all six videos and Hirevire submission</span>
           <span>✓ Candidate ID preserved</span>
         </div>
+        <div class="final-review-actions">
+          <button class="secondary" id="reviewSubmittedCases" type="button">Review my submitted case answers</button>
+          <a class="secondary button-link" id="completionVideoLink" target="_blank" rel="noopener noreferrer">Open Hirevire videos</a>
+        </div>
+        <p class="draft-state">If Hirevire still shows an unfinished question, open the video link and complete it. The hiring team checks the provider submission separately.</p>
       </section>
 
       <form id="writtenSubmitForm" method="post" target="writtenSubmitTarget" hidden></form>
@@ -186,7 +207,7 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=2026-09-22-cloud-case-backup-v7"></script>
-  <script src="app.js?v=2026-09-22-cloud-case-backup-v7"></script>
+  <script src="config.js?v=2026-09-23-final-review-v8"></script>
+  <script src="app.js?v=2026-09-23-final-review-v8"></script>
 </body>
 </html>
