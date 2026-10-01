@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>Ticket Purchasing Assessment</title>
-  <link rel="stylesheet" href="styles.css?v=2026-09-22-cloud-case-backup-v7">
+  <link rel="stylesheet" href="styles.css?v=2026-10-01-two-step-v10">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to assessment</a>
@@ -33,13 +33,13 @@
     <div id="assessmentApp" hidden>
       <section class="intro card">
         <div>
-          <p class="eyebrow">Five written cases · six recordings</p>
-          <h2>Write your decision, then defend it on video.</h2>
-          <p>Use the tabs to open any written case. After writing Case X, record only Hirevire Question X, or return to its video later. All six recordings are required before final submission.</p>
+          <p class="eyebrow">Two steps · five written cases, then six short videos</p>
+          <h2>Write your decisions, then explain them on video.</h2>
+          <p><strong>Step 1:</strong> answer the five written cases and submit them. <strong>Step 2:</strong> record six short videos in one go (about 15–20 minutes). You can open any case from the tabs below.</p>
         </div>
         <div class="snapshot-note">
-          <strong>Your work is protected</strong>
-          <span>Each written case is saved in this browser and an online recovery backup is requested when you continue. Keep this page open, and after each video return here.</span>
+          <strong>Your work is saved</strong>
+          <span>Answers are saved in this browser as you type, and a backup copy is sent each time you save a case.</span>
         </div>
       </section>
 
@@ -80,65 +80,49 @@
             <form id="writtenCaseForm" novalidate>
               <div class="written-fields" id="writtenFields"></div>
               <p class="draft-state" id="draftState" aria-live="polite">Drafts are saved in this browser.</p>
-              <button class="primary case-submit" id="saveAndRecord" type="submit">Save answers and record Case 1 explanation</button>
+              <button class="primary case-submit" id="saveAndRecord" type="submit">Save Case 1 and continue</button>
             </form>
           </section>
           <section class="case-controls card">
-            <button class="secondary" id="previousCase" type="button">Review previous case</button>
+            <button class="secondary" id="previousCase" type="button">Previous case</button>
             <span id="caseControlHint">Complete the written fields to continue.</span>
           </section>
         </aside>
       </section>
 
-      <section class="inline-video-section card" id="inlineVideoSection" hidden>
-        <div class="video-step-banner">
-          <div>
-            <p class="eyebrow" id="videoEyebrow">Case 1 video explanation</p>
-            <h2 id="videoTitle">Record Hirevire Question 1</h2>
-            <p id="videoInstructions"></p>
-          </div>
-          <span class="step-badge" id="videoStepBadge">Question 1 of 6</span>
+      <section class="completion card" id="finalReviewSection" hidden>
+        <p class="eyebrow">Step 1 of 2 · Written answers</p>
+        <h2>Submit your written answers</h2>
+        <p>Check that all five cases are complete. After you submit, you will go straight to the videos.</p>
+        <div class="summary-checklist" id="finalReviewChecklist"></div>
+        <div class="final-review-actions">
+          <button class="primary" id="finalSubmitButton" type="button" disabled>Submit written answers and continue to videos</button>
+        </div>
+        <p class="draft-state" id="finalReviewHint" aria-live="polite"></p>
+      </section>
+
+      <section class="completion card video-step" id="videoSection" hidden>
+        <p class="written-done" id="writtenDoneBanner">✓ Written answers submitted</p>
+        <p class="eyebrow">Step 2 of 2 · Videos</p>
+        <h2>Record 6 short videos</h2>
+        <p class="video-lede">About 15–20 minutes. Go straight through all six questions in order, then press <strong>Submit</strong> at the end in Hirevire.</p>
+        <div class="recorder-launch">
+          <a class="primary button-link recorder-button" id="openRecorder" target="_blank" rel="noopener">Open video recorder</a>
+          <span>Opens in a new tab. Allow camera and microphone when asked. On a phone, use Chrome or Safari, not the browser inside your email app.</span>
         </div>
 
-        <div class="return-instruction">
-          <strong>ONE VIDEO ONLY</strong>
-          <span id="videoReturnInstructionText">Record only the Hirevire question named above. Do not record any later answers. After reviewing or retaking this video, do not press Hirevire’s red Next button. Return below and press the blue assessment button.</span>
-        </div>
+        <h3 class="video-list-title">The six questions</h3>
+        <p class="video-list-note">Use your written answers as notes. Each video only needs to explain your thinking.</p>
+        <ol class="video-questions" id="videoQuestions"></ol>
 
-        <aside class="recorder-permission-warning" role="note" aria-label="Recorder setup warning">
-          <strong>Before recording</strong>
-          <ul>
-            <li>If you use an ad blocker or content blocker, allow this assessment page and Hirevire.</li>
-            <li>Allow camera and microphone access when your browser asks.</li>
-          </ul>
-          <span>If access was previously blocked, update the site permissions in your browser and reload Hirevire.</span>
-        </aside>
-
-        <div class="status-panel" id="inlineProviderStatus" aria-live="polite">
-          <span class="status-dot" aria-hidden="true"></span>
-          <div><strong>Loading Hirevire</strong><span>The page is loading; camera and microphone checks happen inside Hirevire.</span></div>
-        </div>
-
-        <section class="recorder-recovery" aria-labelledby="recorderRecoveryTitle">
-          <div>
-            <h3 id="recorderRecoveryTitle">Having trouble with the embedded recorder?</h3>
-            <p>Open the same prefilled Hirevire application in a separate browser tab. Your Candidate ID and email will remain attached.</p>
-          </div>
-          <a class="secondary button-link" id="openRecorderDirect" target="_blank" rel="noopener noreferrer">Open recorder in a new tab</a>
-        </section>
-
-        <div class="embedded-recorder" id="embeddedRecorder">
-          <div class="recorder-placeholder" id="recorderPlaceholder">
-            <span class="recorder-icon" aria-hidden="true">●</span>
-            <strong>Loading embedded Hirevire page</strong>
-            <p>If it does not load, use “Open recorder in a new tab” above. Your browser-saved written answers will remain available here.</p>
-          </div>
-          <iframe id="videoProviderFrame" title="Hirevire video explanation recorder" allow="camera; microphone; display-capture; clipboard-write; encrypted-media; fullscreen" hidden></iframe>
+        <div class="finish-note">
+          <strong>When are you finished?</strong>
+          <span>When Hirevire shows its confirmation screen after you press Submit. If you closed it before then, open the video recorder again and finish.</span>
         </div>
 
         <details class="recording-problem" id="recordingProblem">
-          <summary>Report a recording problem</summary>
-          <p>This sends technical context only. It does not capture your camera, microphone, recording or passwords.</p>
+          <summary>Having a problem recording?</summary>
+          <p>Try a different browser (Chrome or Safari) or a computer. If it still fails, tell us below. This sends technical details only, never your camera, microphone or passwords.</p>
           <label for="recordingIssueCategory">What went wrong?</label>
           <select id="recordingIssueCategory">
             <option value="Recorder did not load">Recorder did not load</option>
@@ -152,45 +136,6 @@
           <button class="secondary" id="sendRecordingIssue" type="button">Send problem report</button>
           <p class="draft-state" id="recordingIssueStatus" aria-live="polite"></p>
         </details>
-
-        <div class="video-return-actions">
-          <label class="recording-confirm"><input id="recordingConfirmed" type="checkbox"> <span id="recordingConfirmText">I have recorded the matching Hirevire answer.</span></label>
-          <button class="primary" id="videoReturnButton" type="button" disabled>I recorded Question 1 — continue to Case 2</button>
-          <p id="videoReturnHint">Complete the recording in Hirevire, then tick the confirmation above.</p>
-        </div>
-      </section>
-
-      <section class="completion card" id="finalReviewSection" hidden>
-        <p class="eyebrow">Final Summary</p>
-        <h2>Complete every item before submitting.</h2>
-        <p>This page tracks each written case and video confirmation. Use the action beside any missing item, then return to the Final Summary tab.</p>
-        <div class="summary-totals" id="finalReviewStatus" aria-live="polite"></div>
-        <div class="summary-checklist" id="finalReviewChecklist"></div>
-        <div class="final-confirmations">
-          <label class="recording-confirm"><input id="allWrittenConfirmed" type="checkbox" disabled> <strong>Yes</strong> — I have reviewed all five cases and completed every written question.</label>
-          <label class="recording-confirm"><input id="allVideosConfirmed" type="checkbox" disabled> <strong>Yes</strong> — I have recorded all six Hirevire videos and submitted the complete Hirevire application.</label>
-        </div>
-        <div class="final-review-actions">
-          <a class="secondary button-link" id="finalReviewVideoLink" target="_blank" rel="noopener noreferrer">Open Hirevire to review or finish my videos</a>
-          <button class="primary" id="finalSubmitButton" type="button" disabled>Submit my written answers and finish</button>
-        </div>
-        <p class="draft-state" id="finalReviewHint">Complete every missing item. The two Yes confirmations will unlock when the summary reaches 5/5 written and 6/6 videos.</p>
-      </section>
-
-      <section class="completion card" id="completionSection" hidden>
-        <p class="eyebrow">Submission request sent</p>
-        <h2>Your written answers were sent for verification.</h2>
-        <p>This browser cannot independently confirm Google Forms receipt. The hiring team will verify the written response plus all six Hirevire recordings and transcripts before marking the full assessment complete.</p>
-        <div class="completion-checks">
-          <span>✓ Written submission request sent</span>
-          <span>✓ Candidate confirmed all six videos and Hirevire submission</span>
-          <span>✓ Candidate ID preserved</span>
-        </div>
-        <div class="final-review-actions">
-          <button class="secondary" id="reviewSubmittedCases" type="button">Review my submitted case answers</button>
-          <a class="secondary button-link" id="completionVideoLink" target="_blank" rel="noopener noreferrer">Open Hirevire videos</a>
-        </div>
-        <p class="draft-state">If Hirevire still shows an unfinished question, open the video link and complete it. The hiring team checks the provider submission separately.</p>
       </section>
 
       <form id="writtenSubmitForm" method="post" target="writtenSubmitTarget" hidden></form>
@@ -208,7 +153,7 @@
   </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=2026-09-23-final-summary-v9"></script>
-  <script src="app.js?v=2026-09-23-final-summary-v9"></script>
+  <script src="config.js?v=2026-10-01-two-step-v10"></script>
+  <script src="app.js?v=2026-10-01-two-step-v10"></script>
 </body>
 </html>
