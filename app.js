@@ -5,10 +5,10 @@
   const cases = [
     {
       number: 1,
-      title: "Mixed inventory: would you buy?",
+      title: "Drop alert: would you buy?",
       context: "James Taylor and His All-Star Band · 26 September 2026 · Hollywood, Florida",
-      taskTitle: "Make a purchase decision",
-      prompt: "Explain what you would buy or avoid and why. Include your view on Section 101 at $428 per ticket, Section 302 and the 100-level sections.",
+      taskTitle: "Your drop checker just alerted you",
+      prompt: "You are monitoring this event for new inventory, and your drop checker has just alerted you that new tickets have been released. Would you buy?\n\nExplain what you would buy or avoid and why. Include your view on Section 101 at $428 per ticket, Section 302 and the 100-level sections.",
       inventory: [
         {name: "Section 101", detail: "100 level · front section beside the stage · $428 per ticket"},
         {name: "Section 302", detail: "300 level · upper tier · use the evidence tabs for prices"},
