@@ -106,7 +106,7 @@
       return;
     }
     sections = [
-      {...interview, navLabel: "Interview question", navShort: "Interview"},
+      ...interview.interviews.map((item, i) => ({...item, interview: true, navLabel: `Interview Q${i + 1}`, navShort: `Interview Q${i + 1}`})),
       ...cases.map(item => ({
         eyebrow: `Case study ${item.number} of ${cases.length}`,
         title: item.title,
@@ -123,7 +123,7 @@
     sections.forEach((section, index) => {
       const button = document.createElement("button");
       button.type = "button";
-      button.className = `case-tab${index === 0 ? " interview-first interview-tab-label" : ""}`;
+      button.className = `case-tab${section.interview ? " interview-tab interview-tab-label" : ""}`;
       button.dataset.number = section.navShort;
       button.textContent = section.navLabel;
       button.addEventListener("click", () => show(index));
