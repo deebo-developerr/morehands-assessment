@@ -107,18 +107,23 @@
     }
     sections = [
       ...interview.interviews.map((item, i) => ({...item, interview: true, navLabel: `Interview Q${i + 1}`, navShort: `Interview Q${i + 1}`})),
-      ...cases.map(item => ({
-        eyebrow: `Case study ${item.number} of ${cases.length}`,
-        title: item.title,
-        context: item.context,
-        taskTitle: item.taskTitle,
-        prompt: item.prompt,
-        inventory: item.inventory,
-        // Case images are public assets one folder up from this page.
-        evidence: item.evidence.map(ev => ({...ev, src: `../${ev.src}`})),
-        navLabel: `Case ${item.number}`,
-        navShort: String(item.number)
-      }))
+      // Only Case Study 1 is used in the interview, presented as the next interview question.
+      ...cases.slice(0, 1).map(item => {
+        const n = interview.interviews.length + 1;
+        return {
+          eyebrow: `Interview question ${n}`,
+          title: "Third drop alert: would you buy?",
+          context: item.context,
+          taskTitle: item.taskTitle,
+          prompt: item.prompt,
+          inventory: item.inventory,
+          // Case images are public assets one folder up from this page.
+          evidence: item.evidence.map(ev => ({...ev, src: `../${ev.src}`})),
+          interview: true,
+          navLabel: `Interview Q${n}`,
+          navShort: `Interview Q${n}`
+        };
+      })
     ];
     sections.forEach((section, index) => {
       const button = document.createElement("button");
