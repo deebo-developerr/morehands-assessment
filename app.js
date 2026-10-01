@@ -9,6 +9,11 @@
       context: "James Taylor and His All-Star Band · 26 September 2026 · Hollywood, Florida",
       taskTitle: "Make a purchase decision",
       prompt: "Explain what you would buy or avoid and why. Include your view on Section 101 at $428 per ticket, Section 302 and the 100-level sections.",
+      inventory: [
+        {name: "Section 101", detail: "100 level · front section beside the stage · $428 per ticket"},
+        {name: "Section 302", detail: "300 level · upper tier · use the evidence tabs for prices"},
+        {name: "100-level sections", detail: "Lower bowl · Sections 101–117 · front, sides and rear"}
+      ],
       videoPrompt: "Case Study A — Explain what you would buy or avoid and why, including your view on Section 101 at $428 per ticket, Section 302 and the 100-level sections.",
       fields: [
         {key: "fullName", label: "Full name", type: "text", autocomplete: "name"},

@@ -33,5 +33,5 @@ window.ASSESSMENT_CONFIG = {
     browserInformation: "613202472",
     clientTimestamp: "1646254060"
   },
-  version: "2026-10-01-two-step-v10"
+  version: "2026-10-01-two-step-v11"
 };
