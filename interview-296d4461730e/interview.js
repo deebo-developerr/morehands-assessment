@@ -7,7 +7,6 @@
   const nav = document.getElementById("sectionNav");
   const tabs = document.getElementById("evidenceTabs");
   const image = document.getElementById("evidenceImage");
-  const viewer = document.getElementById("viewer");
   const navButtons = [];
   let sections = [];
   let current = 0;
@@ -39,8 +38,6 @@
     document.getElementById("evidenceLabel").textContent = ev.label;
     document.getElementById("evidenceMeta").textContent = ev.meta;
     [...tabs.children].forEach((button, i) => button.setAttribute("aria-selected", String(i === index)));
-    viewer.scrollTo(0, 0);
-    setZoom("fit");
   }
 
   function show(index) {
@@ -53,8 +50,9 @@
     document.getElementById("sectionEyebrow").textContent = section.eyebrow;
     document.getElementById("sectionTitle").textContent = section.title;
     document.getElementById("sectionContext").textContent = section.context;
-    document.getElementById("taskEyebrow").textContent = section.questions ? "Questions" : "Question";
-    document.getElementById("taskTitle").textContent = section.taskTitle || section.title;
+    const taskTitle = document.getElementById("taskTitle");
+    taskTitle.textContent = section.taskTitle || "";
+    taskTitle.hidden = !section.taskTitle || section.taskTitle === section.title;
     const prompt = document.getElementById("taskPrompt");
     prompt.textContent = section.prompt || "";
     prompt.hidden = !section.prompt;
@@ -86,11 +84,17 @@
       return button;
     }));
     renderEvidence(0);
+    fitImage();
   }
 
-  function setZoom(mode) {
-    image.style.width = mode === "fit" ? "100%" : `${mode}%`;
+  // Size images to the screen height left below the evidence tabs, so the whole image is visible without scrolling.
+  function fitImage() {
+    const viewerTop = document.getElementById("viewer").getBoundingClientRect().top + window.scrollY;
+    const caption = document.querySelector(".evidence-caption").offsetHeight;
+    const available = Math.max(360, window.innerHeight - viewerTop - caption - 16);
+    document.documentElement.style.setProperty("--fit-height", `${available}px`);
   }
+  window.addEventListener("resize", fitImage);
 
   async function start() {
     let interview;
@@ -130,14 +134,15 @@
     show(0);
   }
 
-  document.querySelectorAll("[data-zoom]").forEach(button => button.addEventListener("click", () => setZoom(button.dataset.zoom)));
   const dialog = document.getElementById("imageDialog");
   const dialogImage = document.getElementById("dialogImage");
-  document.getElementById("openImage").addEventListener("click", () => {
+  function openFullImage() {
     dialogImage.src = image.src;
     dialogImage.alt = image.alt;
     dialog.showModal();
-  });
+  }
+  document.getElementById("openImage").addEventListener("click", openFullImage);
+  image.addEventListener("click", openFullImage);
   document.getElementById("closeDialog").addEventListener("click", () => dialog.close());
 
   start();
